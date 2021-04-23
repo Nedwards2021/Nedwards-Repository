@@ -1,0 +1,323 @@
+######################################
+# Opening Comments
+# Author: Nathaniel Edwards
+# 3/26/21
+# Avoidance Game
+#######################################
+
+import pygame
+import random
+
+from pygame.locals import (
+    RLEACCEL,
+    K_UP,
+    K_DOWN,
+    K_LEFT,
+    K_RIGHT,
+    K_ESCAPE,
+    KEYDOWN,
+    KEYUP,
+    K_SPACE,
+    QUIT,
+    )
+
+SCREEN_WIDTH = 500
+SCREEN_HEIGHT = 700
+EnemySpawnSpeed = 1000
+RED = 135
+BLUE = 205
+GREEN = 250
+
+class Player(pygame.sprite.Sprite):
+    walkCount = 0
+    moving = False
+    IdleCount = 0
+    facingRight = False
+    facingLeft = False
+    facingUp = False
+    facingDown = False
+    isIdle = True
+    isFlashing = False
+    def __init__(self):
+        super(Player, self).__init__()
+        self.surf = pygame.image.load("Images/Swordsman/Swordsman-Idle-North_00.png").convert()
+        self.surf.set_colorkey((0, 0, 0), RLEACCEL)
+        self.rect = self.surf.get_rect(center=((SCREEN_WIDTH/2), 650))
+
+    def update(self, pressed_keys):
+
+        playerAnimationRight = ["Images/Swordsman/Swordsman-Run-East_00.png", "Images/Swordsman/Swordsman-Run-East_01.png",
+                                "Images/Swordsman/Swordsman-Run-East_02.png", "Images/Swordsman/Swordsman-Run-East_03.png",
+                                "Images/Swordsman/Swordsman-Run-East_04.png", "Images/Swordsman/Swordsman-Run-East_05.png",
+                                "Images/Swordsman/Swordsman-Run-East_06.png", "Images/Swordsman/Swordsman-Run-East_07.png",
+                                "Images/Swordsman/Swordsman-Run-East_08.png", "Images/Swordsman/Swordsman-Run-East_09.png",
+                                "Images/Swordsman/Swordsman-Run-East_10.png"]
+        playerAnimationLeft = ["Images/Swordsman/Swordsman-Run-West_00.png", "Images/Swordsman/Swordsman-Run-West_01.png",
+                                "Images/Swordsman/Swordsman-Run-West_02.png", "Images/Swordsman/Swordsman-Run-West_03.png",
+                                "Images/Swordsman/Swordsman-Run-West_04.png", "Images/Swordsman/Swordsman-Run-West_05.png",
+                                "Images/Swordsman/Swordsman-Run-West_06.png", "Images/Swordsman/Swordsman-Run-West_07.png",
+                                "Images/Swordsman/Swordsman-Run-West_08.png", "Images/Swordsman/Swordsman-Run-West_09.png",
+                                "Images/Swordsman/Swordsman-Run-West_10.png"]
+        playerAnimationUp = ["Images/Swordsman/Swordsman-Run-North_00.png", "Images/Swordsman/Swordsman-Run-North_01.png",
+                                "Images/Swordsman/Swordsman-Run-North_02.png", "Images/Swordsman/Swordsman-Run-North_03.png",
+                                "Images/Swordsman/Swordsman-Run-North_04.png", "Images/Swordsman/Swordsman-Run-North_05.png",
+                                "Images/Swordsman/Swordsman-Run-North_06.png", "Images/Swordsman/Swordsman-Run-North_07.png",
+                                "Images/Swordsman/Swordsman-Run-North_08.png", "Images/Swordsman/Swordsman-Run-North_09.png",
+                                "Images/Swordsman/Swordsman-Run-North_10.png"]
+        playerAnimationDown = ["Images/Swordsman/Swordsman-Run-South_00.png", "Images/Swordsman/Swordsman-Run-South_01.png",
+                                "Images/Swordsman/Swordsman-Run-South_02.png", "Images/Swordsman/Swordsman-Run-South_03.png",
+                                "Images/Swordsman/Swordsman-Run-South_04.png", "Images/Swordsman/Swordsman-Run-South_05.png",
+                                "Images/Swordsman/Swordsman-Run-South_06.png", "Images/Swordsman/Swordsman-Run-South_07.png",
+                                "Images/Swordsman/Swordsman-Run-South_08.png", "Images/Swordsman/Swordsman-Run-South_09.png",
+                                "Images/Swordsman/Swordsman-Run-South_10.png"]
+        PlayerIdleAnimation = ["Images/Swordsman/Swordsman-Idle-North_00.png", "Images/Swordsman/Swordsman-Idle-North_01.png",
+                               "Images/Swordsman/Swordsman-Idle-North_02.png", "Images/Swordsman/Swordsman-Idle-North_03.png",
+                               "Images/Swordsman/Swordsman-Idle-North_04.png", "Images/Swordsman/Swordsman-Idle-North_05.png",
+                               "Images/Swordsman/Swordsman-Idle-North_06.png", "Images/Swordsman/Swordsman-Idle-North_07.png",
+                               "Images/Swordsman/Swordsman-Idle-North_08.png", "Images/Swordsman/Swordsman-Idle-North_09.png",
+                               "Images/Swordsman/Swordsman-Idle-North_10.png"]
+
+        if self.moving:
+            if self.facingRight:
+                if self.walkCount > len(playerAnimationRight) - 1:
+                    self.walkCount = 0
+                self.surf = pygame.image.load(playerAnimationRight[self.walkCount]).convert_alpha()
+                self.walkCount += 1
+            elif self.facingLeft:
+                if self.walkCount > len(playerAnimationLeft) - 1:
+                    self.walkCount = 0
+                self.surf = pygame.image.load(playerAnimationLeft[self.walkCount]).convert_alpha()
+                self.walkCount += 1
+            elif self.facingUp:
+                if self.walkCount > len(playerAnimationUp) - 1:
+                    self.walkCount = 0
+                self.surf = pygame.image.load(playerAnimationUp[self.walkCount]).convert_alpha()
+                self.walkCount += 1
+            elif self.facingDown:
+                if self.walkCount > len(playerAnimationDown) - 1:
+                    self.walkCount = 0
+                self.surf = pygame.image.load(playerAnimationDown[self.walkCount]).convert_alpha()
+                self.walkCount += 1
+        elif self.isIdle:
+            self.moving = False
+            if self.IdleCount > len(PlayerIdleAnimation) - 1:
+                self.IdleCount = 0
+            self.surf = pygame.image.load(PlayerIdleAnimation[self.IdleCount]).convert_alpha()
+            self.IdleCount += 1
+
+
+
+        if pressed_keys[K_LEFT]:
+            self.rect.move_ip(-10,0)
+        if pressed_keys[K_RIGHT]:
+            self.rect.move_ip(10,0)
+        if pressed_keys[K_UP]:
+            self.rect.move_ip(0, -10)
+        if pressed_keys[K_DOWN]:
+            self.rect.move_ip(0, 10)
+
+        #Keep the player from going off screen
+        if self.rect.left < 0:
+            self.rect.left = 0
+        if self.rect.right > SCREEN_WIDTH:
+            self.rect.right = SCREEN_WIDTH
+        if self.rect.top <= 0:
+            self.rect.top = 0
+        if self.rect.bottom >= SCREEN_HEIGHT:
+            self.rect.bottom = SCREEN_HEIGHT
+
+    def Reset(self):
+        self.surf = pygame.image.load("Images/Swordsman/Swordsman-Idle-North_00.png").convert()
+        self.surf.set_colorkey((0, 0, 0), RLEACCEL)
+        self.rect = self.surf.get_rect(center=((SCREEN_WIDTH / 2), 650))
+        self.isFlashing = True
+
+
+class Enemy(pygame.sprite.Sprite):
+    WalkCount = 0
+    AttackCount = 0
+    DeathCount = 0
+    Dying = False
+    CurrentSpeed = 4
+    def __init__(self):
+        super(Enemy, self).__init__()
+        self.surf = pygame.image.load("Images/Enemy/Enemy-Melee-Ghost-S_00.png").convert_alpha()
+        self.rect = self.surf.get_rect(center=(random.randint(5, SCREEN_WIDTH-10), random.randint(1, 10)))
+        self.speed = self.CurrentSpeed
+        self.etype = 'Ghost'
+
+    def update(self):
+        EnemyMove = ["Images/Enemy/Enemy-Melee-Ghost-S_00.png", "Images/Enemy/Enemy-Melee-Ghost-S_01.png",
+                     "Images/Enemy/Enemy-Melee-Ghost-S_02.png", "Images/Enemy/Enemy-Melee-Ghost-S_03.png",
+                     "Images/Enemy/Enemy-Melee-Ghost-S_04.png", "Images/Enemy/Enemy-Melee-Ghost-S_05.png",
+                     "Images/Enemy/Enemy-Melee-Ghost-S_06.png", "Images/Enemy/Enemy-Melee-Ghost-S_07.png",
+                     "Images/Enemy/Enemy-Melee-Ghost-S_08.png", "Images/Enemy/Enemy-Melee-Ghost-S_09.png",
+                     "Images/Enemy/Enemy-Melee-Ghost-S_10.png", "Images/Enemy/Enemy-Melee-Ghost-S_11.png"]
+        EnemyAttack = ["Images/Enemy/Enemy-Melee-Attack-S_00.png", "Images/Enemy/Enemy-Melee-Attack-S_01.png",
+                       "Images/Enemy/Enemy-Melee-Attack-S_02.png", "Images/Enemy/Enemy-Melee-Attack-S_03.png",
+                       "Images/Enemy/Enemy-Melee-Attack-S_04.png", "Images/Enemy/Enemy-Melee-Attack-S_05.png",
+                       "Images/Enemy/Enemy-Melee-Attack-S_06.png", "Images/Enemy/Enemy-Melee-Attack-S_07.png",
+                       "Images/Enemy/Enemy-Melee-Attack-S_08.png", "Images/Enemy/Enemy-Melee-Attack-S_09.png",
+                       "Images/Enemy/Enemy-Melee-Attack-S_10.png", "Images/Enemy/Enemy-Melee-Attack-S_11.png",
+                       "Images/Enemy/Enemy-Melee-Attack-S_12.png", "Images/Enemy/Enemy-Melee-Attack-S_13.png",
+                       "Images/Enemy/Enemy-Melee-Attack-S_14.png", "Images/Enemy/Enemy-Melee-Attack-S_15.png",
+                       "Images/Enemy/Enemy-Melee-Attack-S_16.png", "Images/Enemy/Enemy-Melee-Attack-S_17.png",
+                       "Images/Enemy/Enemy-Melee-Attack-S_18.png", "Images/Enemy/Enemy-Melee-Attack-S_19.png",
+                       "Images/Enemy/Enemy-Melee-Attack-S_20.png", "Images/Enemy/Enemy-Melee-Attack-S_21.png",
+                       "Images/Enemy/Enemy-Melee-Attack-S_21.png", "Images/Enemy/Enemy-Melee-Attack-S_23.png"]
+        EnemyDeath = ["Images/Enemy/Enemy-Melee-Death_00.png", "Images/Enemy/Enemy-Melee-Death_01.png",
+                      "Images/Enemy/Enemy-Melee-Death_02.png", "Images/Enemy/Enemy-Melee-Death_03.png",
+                      "Images/Enemy/Enemy-Melee-Death_04.png", "Images/Enemy/Enemy-Melee-Death_05.png",
+                      "Images/Enemy/Enemy-Melee-Death_06.png", "Images/Enemy/Enemy-Melee-Death_07.png",
+                      "Images/Enemy/Enemy-Melee-Death_08.png", "Images/Enemy/Enemy-Melee-Death_09.png",
+                      "Images/Enemy/Enemy-Melee-Death_10.png", "Images/Enemy/Enemy-Melee-Death_11.png",
+                      "Images/Enemy/Enemy-Melee-Death_12.png", "Images/Enemy/Enemy-Melee-Death_13.png",
+                      "Images/Enemy/Enemy-Melee-Death_14.png", "Images/Enemy/Enemy-Melee-Death_15.png",
+                      "Images/Enemy/Enemy-Melee-Death_16.png", "Images/Enemy/Enemy-Melee-Death_17.png",
+                      "Images/Enemy/Enemy-Melee-Death_18.png", "Images/Enemy/Enemy-Melee-Death_19.png",
+                      "Images/Enemy/Enemy-Melee-Death_20.png", "Images/Enemy/Enemy-Melee-Death_21.png",
+                      "Images/Enemy/Enemy-Melee-Death_22.png", "Images/Enemy/Enemy-Melee-Death_23.png",]
+        if self.WalkCount > len(EnemyMove) - 1:
+            self.WalkCount = 0
+        self.surf = pygame.image.load(EnemyMove[self.WalkCount]).convert_alpha()
+        self.WalkCount += 1
+
+
+        if self.rect.bottom >= SCREEN_HEIGHT+10:
+            if self.DeathCount > len(EnemyDeath) - 1:
+                self.kill()
+                self.DeathCount = 0
+            else:
+                self.surf = pygame.image.load(EnemyDeath[self.DeathCount]).convert_alpha()
+                self.DeathCount += 1
+        else:
+            self.rect.move_ip(0, self.speed)
+
+    def Dying(self, value):
+        self.Dying = value
+
+def LevelUp(Level, RED, BLUE, GREEN):
+    pygame.time.set_timer(ADDENEMY, EnemySpawnSpeed-30)
+    Enemy.CurrentSpeed = Enemy.CurrentSpeed + 1
+    Level += 1
+    RED = random.randint(10, 245)
+    BLUE = random.randint(10, 245)
+    GREEN = random.randint(10, 245)
+    return Level, RED, BLUE, GREEN
+
+
+
+#Main Code
+pygame.init()
+
+Lives = 10
+Level = 1
+black = (0, 0, 0)
+myFont = pygame.font.SysFont("Comicsans", 40)
+Lives_Label = myFont.render("Lives: ", 1, black)
+Lives_Value = myFont.render(str(Lives), 1, black)
+Level_Label = myFont.render("Level: ", 1, black)
+Level_Value = myFont.render(str(Level), 1, black)
+myEndFont = pygame.font.SysFont("Comicsans", 80)
+End_Label = myEndFont.render("GAME OVER!!!", 1, black)
+EnemyLevel = 1
+
+clock = pygame.time.Clock()
+
+ADDENEMY = pygame.USEREVENT+1
+LEVELUP = pygame.USEREVENT+2
+pygame.time.set_timer(ADDENEMY, EnemySpawnSpeed)
+pygame.time.set_timer(LEVELUP, 30000)
+
+
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Avoidance game")
+
+player = Player()
+enemy = Enemy()
+
+all_Sprites = pygame.sprite.Group()
+all_Enemies = pygame.sprite.Group()
+all_Sprites.add(player)
+all_Enemies.add(enemy)
+all_Sprites.add(enemy)
+
+running = True
+
+while running:
+    for event in pygame.event.get():
+        if event.type == KEYDOWN:
+            if event.key == K_LEFT:
+                player.moving = True
+                player.facingRight = False
+                player.facingLeft = True
+                player.facingUp = False
+                player.facingDown = False
+            elif event.key == K_RIGHT:
+                player.moving = True
+                player.facingRight = True
+                player.facingLeft = False
+                player.facingUp = False
+                player.facingDown = False
+            elif event.key == K_UP:
+                player.moving = True
+                player.facingRight = False
+                player.facingLeft = False
+                player.facingUp = True
+                player.facingDown = False
+            elif event.key == K_DOWN:
+                player.moving = True
+                player.facingRight = False
+                player.facingLeft = False
+                player.facingUp = False
+                player.facingDown = True
+            if event.key == K_ESCAPE:
+                running = False
+        elif event.type == KEYUP:
+            if event.key == K_LEFT: 
+                player.moving = False
+                player.isIdle = True
+            elif event.key == K_RIGHT:
+                player.moving = False
+                player.isIdle = True
+            elif event.key == K_UP:
+                player.moving = False
+                player.isIdle = True
+            elif event.key == K_DOWN:
+                player.moving = False
+                player.isIdle = True
+        elif event.type == QUIT:
+            running = False
+        elif event.type == ADDENEMY:
+            newEnemy = Enemy()
+            all_Enemies.add(newEnemy)
+            all_Sprites.add(newEnemy)
+        elif event.type == LEVELUP:
+            Level, RED, BLUE, GREEN = LevelUp(Level, RED, BLUE, GREEN)
+
+    pressed_keys = pygame.key.get_pressed()
+    player.update(pressed_keys)
+    all_Enemies.update()
+
+    screen.fill((RED, BLUE, GREEN))
+
+    for entity in all_Sprites:
+        screen.blit(entity.surf, entity.rect)
+
+
+    PlayervsSpectre = pygame.sprite.spritecollideany(player, all_Enemies)
+    if PlayervsSpectre != None:
+        PlayervsSpectre.kill()
+        player.Reset()
+        Lives -= 1
+
+    Level_Value = myFont.render(str(Level), 1, black)
+    Lives_Value = myFont.render(str(Lives), 1, black)
+    screen.blit(Level_Label, (SCREEN_WIDTH-150, 2))
+    screen.blit(Level_Value, (SCREEN_WIDTH-60, 2))
+    screen.blit(Lives_Label, (SCREEN_WIDTH-490, 2))
+    screen.blit(Lives_Value, (SCREEN_WIDTH-400, 2))
+
+    pygame.display.flip()
+
+    clock.tick(30)
