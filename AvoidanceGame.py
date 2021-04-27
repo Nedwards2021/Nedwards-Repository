@@ -183,7 +183,7 @@ class Enemy(pygame.sprite.Sprite):
         self.WalkCount += 1
 
 
-        if self.rect.bottom >= SCREEN_HEIGHT+10:
+        if self.rect.bottom >= SCREEN_HEIGHT-15:
             if self.DeathCount > len(EnemyDeath) - 1:
                 self.kill()
                 self.DeathCount = 0
@@ -195,6 +195,32 @@ class Enemy(pygame.sprite.Sprite):
 
     def Dying(self, value):
         self.Dying = value
+
+class Potions(pygame.sprite.Sprite):
+    CurrSpeed = 4
+    BubbleCount = 0
+
+    def __init__(self):
+        super(Potions, self).__init__()
+        self.surf = pygame.image.load("Images/Potions/Blue/00_Blue_Potion_Full.png").convert_alpha()
+        self.rect = self.surf.get_rect(center=(random.randint(5, SCREEN_WIDTH - 10), random.randint(1, 10)))
+        self.speed = self.CurrSpeed
+
+    def update(self):
+        #All potion sprites gotten from Flip on Itch.io.
+        BluePotionBubble = ["Images/Potions/Blue/00_Blue_Potion_Full.png", "Images/Potions/Blue/01_Blue_Potion_Full.png",
+                            "Images/Potions/Blue/02_Blue_Potion_Full.png", "Images/Potions/Blue/03_Blue_Potion_Full.png",
+                            "Images/Potions/Blue/04_Blue_Potion_Full.png", "Images/Potions/Blue/05_Blue_Potion_Full.png",
+                            "Images/Potions/Blue/06_Blue_Potion_Full.png", "Images/Potions/Blue/07_Blue_Potion_Full.png"]
+        if self.BubbleCount > len(BluePotionBubble) - 1:
+            self.BubbleCount = 0
+        self.surf = pygame.image.load(BluePotionBubble[self.BubbleCount]).convert_alpha()
+        self.BubbleCount += 1
+
+        if self.rect.bottom >= SCREEN_HEIGHT - 15:
+            self.kill()
+        else:
+            self.rect.move_ip(0, self.speed)
 
 def LevelUp(Level, RED, BLUE, GREEN):
     pygame.time.set_timer(ADDENEMY, EnemySpawnSpeed-30)
@@ -226,8 +252,10 @@ clock = pygame.time.Clock()
 
 ADDENEMY = pygame.USEREVENT+1
 LEVELUP = pygame.USEREVENT+2
+ADDPOTION = pygame.USEREVENT+3
 pygame.time.set_timer(ADDENEMY, EnemySpawnSpeed)
 pygame.time.set_timer(LEVELUP, 30000)
+pygame.time.set_timer(ADDPOTION, 1000)
 
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -235,12 +263,16 @@ pygame.display.set_caption("Avoidance game")
 
 player = Player()
 enemy = Enemy()
+potion = Potions()
 
 all_Sprites = pygame.sprite.Group()
 all_Enemies = pygame.sprite.Group()
+all_potions = pygame.sprite.Group()
 all_Sprites.add(player)
 all_Enemies.add(enemy)
 all_Sprites.add(enemy)
+all_potions.add(potion)
+all_Sprites.add(potion)
 
 running = True
 
@@ -294,10 +326,15 @@ while running:
             all_Sprites.add(newEnemy)
         elif event.type == LEVELUP:
             Level, RED, BLUE, GREEN = LevelUp(Level, RED, BLUE, GREEN)
+        elif event.type == ADDPOTION:
+            newPotion = Potions()
+            all_potions.add(newPotion)
+            all_Sprites.add(newPotion)
 
     pressed_keys = pygame.key.get_pressed()
     player.update(pressed_keys)
     all_Enemies.update()
+    all_potions.update()
 
     screen.fill((RED, BLUE, GREEN))
 
