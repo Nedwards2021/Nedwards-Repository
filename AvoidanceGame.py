@@ -19,11 +19,15 @@ from pygame.locals import (
     KEYUP,
     K_SPACE,
     QUIT,
+    K_w,
+    K_a,
+    K_s,
+    K_d
     )
 
 SCREEN_WIDTH = 500
 SCREEN_HEIGHT = 700
-EnemySpawnSpeed = 1000
+EnemySpawnSpeed = 2000
 RED = 135
 BLUE = 205
 GREEN = 250
@@ -32,12 +36,14 @@ class Player(pygame.sprite.Sprite):
     walkCount = 0
     moving = False
     IdleCount = 0
+    Speed = 10
     facingRight = False
     facingLeft = False
     facingUp = False
     facingDown = False
     isIdle = True
     isFlashing = False
+    isInvulnerable = False
     def __init__(self):
         super(Player, self).__init__()
         self.surf = pygame.image.load("Images/Swordsman/Swordsman-Idle-North_00.png").convert()
@@ -108,13 +114,22 @@ class Player(pygame.sprite.Sprite):
 
 
         if pressed_keys[K_LEFT]:
-            self.rect.move_ip(-10,0)
+            self.rect.move_ip(self.Speed * -1,0)
         if pressed_keys[K_RIGHT]:
-            self.rect.move_ip(10,0)
+            self.rect.move_ip(self.Speed,0)
         if pressed_keys[K_UP]:
-            self.rect.move_ip(0, -10)
+            self.rect.move_ip(0, self.Speed * -1)
         if pressed_keys[K_DOWN]:
-            self.rect.move_ip(0, 10)
+            self.rect.move_ip(0, self.Speed)
+        if pressed_keys[K_a]:
+            self.rect.move_ip(self.Speed * -1,0)
+        if pressed_keys[K_d]:
+            self.rect.move_ip(self.Speed,0)
+        if pressed_keys[K_w]:
+            self.rect.move_ip(0, self.Speed * -1)
+        if pressed_keys[K_s]:
+            self.rect.move_ip(0, self.Speed)
+
 
         #Keep the player from going off screen
         if self.rect.left < 0:
@@ -131,6 +146,7 @@ class Player(pygame.sprite.Sprite):
         self.surf.set_colorkey((0, 0, 0), RLEACCEL)
         self.rect = self.surf.get_rect(center=((SCREEN_WIDTH / 2), 650))
         self.isFlashing = True
+        self.isInvulnerable = True
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -199,10 +215,26 @@ class Enemy(pygame.sprite.Sprite):
 class Potions(pygame.sprite.Sprite):
     CurrSpeed = 4
     BubbleCount = 0
+    PotionList = ["Blue", "Red", "Yellow", "Green", "Purple"]
 
     def __init__(self):
         super(Potions, self).__init__()
-        self.surf = pygame.image.load("Images/Potions/Blue/00_Blue_Potion_Full.png").convert_alpha()
+        Potion = random.choice(self.PotionList)
+        if Potion == "Blue":
+            self.surf = pygame.image.load("Images/Potions/Blue/00_Blue_Potion_Full.png").convert_alpha()
+            self.etype = "Blue"
+        elif Potion == "Red":
+            self.surf = pygame.image.load("Images/Potions/Red/00_Red_Potion_Full.png").convert_alpha()
+            self.etype = "Red"
+        elif Potion == "Yellow":
+            self.surf = pygame.image.load("Images/Potions/Yellow/00_Yellow_Potion_Full.png").convert_alpha()
+            self.etype = "Yellow"
+        elif Potion == "Green":
+            self.surf = pygame.image.load("Images/Potions/Green/00_Green_Potion_Full.png").convert_alpha()
+            self.etype = "Green"
+        elif Potion == "Purple":
+            self.surf = pygame.image.load("Images/Potions/Purple/00_Purple_Potion_Full.png").convert_alpha()
+            self.etype = "Purple"
         self.rect = self.surf.get_rect(center=(random.randint(5, SCREEN_WIDTH - 10), random.randint(1, 10)))
         self.speed = self.CurrSpeed
 
@@ -212,10 +244,40 @@ class Potions(pygame.sprite.Sprite):
                             "Images/Potions/Blue/02_Blue_Potion_Full.png", "Images/Potions/Blue/03_Blue_Potion_Full.png",
                             "Images/Potions/Blue/04_Blue_Potion_Full.png", "Images/Potions/Blue/05_Blue_Potion_Full.png",
                             "Images/Potions/Blue/06_Blue_Potion_Full.png", "Images/Potions/Blue/07_Blue_Potion_Full.png"]
+        RedPotionBubble = ["Images/Potions/Red/00_Red_Potion_Full.png", "Images/Potions/Red/01_Red_Potion_Full.png",
+                           "Images/Potions/Red/02_Red_Potion_Full.png", "Images/Potions/Red/03_Red_Potion_Full.png",
+                           "Images/Potions/Red/04_Red_Potion_Full.png", "Images/Potions/Red/05_Red_Potion_Full.png",
+                           "Images/Potions/Red/06_Red_Potion_Full.png", "Images/Potions/Red/07_Red_Potion_Full.png"]
+        YellowPotionBubble = ["Images/Potions/Yellow/00_Yellow_Potion_Full.png", "Images/Potions/Yellow/01_Yellow_Potion_Full.png",
+                              "Images/Potions/Yellow/02_Yellow_Potion_Full.png", "Images/Potions/Yellow/03_Yellow_Potion_Full.png",
+                              "Images/Potions/Yellow/04_Yellow_Potion_Full.png", "Images/Potions/Yellow/05_Yellow_Potion_Full.png",
+                              "Images/Potions/Yellow/06_Yellow_Potion_Full.png", "Images/Potions/Yellow/07_Yellow_Potion_Full.png"]
+        GreenPotionBubble = ["Images/Potions/Green/00_Green_Potion_Full.png", "Images/Potions/Green/01_Green_Potion_Full.png",
+                             "Images/Potions/Green/02_Green_Potion_Full.png", "Images/Potions/Green/03_Green_Potion_Full.png",
+                             "Images/Potions/Green/04_Green_Potion_Full.png", "Images/Potions/Green/05_Green_Potion_Full.png",
+                             "Images/Potions/Green/06_Green_Potion_Full.png", "Images/Potions/Green/07_Green_Potion_Full.png"]
+        PurplePotionBubble = ["Images/Potions/Purple/00_Purple_Potion_Full.png", "Images/Potions/Purple/01_Purple_Potion_Full.png",
+                              "Images/Potions/Purple/02_Purple_Potion_Full.png", "Images/Potions/Purple/03_Purple_Potion_Full.png",
+                              "Images/Potions/Purple/04_Purple_Potion_Full.png", "Images/Potions/Purple/05_Purple_Potion_Full.png",
+                              "Images/Potions/Purple/06_Purple_Potion_Full.png", "Images/Potions/Purple/07_Purple_Potion_Full.png"]
+
         if self.BubbleCount > len(BluePotionBubble) - 1:
             self.BubbleCount = 0
-        self.surf = pygame.image.load(BluePotionBubble[self.BubbleCount]).convert_alpha()
-        self.BubbleCount += 1
+        if self.etype == "Blue":
+            self.surf = pygame.image.load(BluePotionBubble[self.BubbleCount]).convert_alpha()
+            self.BubbleCount += 1
+        elif self.etype == "Red":
+            self.surf = pygame.image.load(RedPotionBubble[self.BubbleCount]).convert_alpha()
+            self.BubbleCount += 1
+        elif self.etype == "Yellow":
+            self.surf = pygame.image.load(YellowPotionBubble[self.BubbleCount]).convert_alpha()
+            self.BubbleCount += 1
+        elif self.etype == "Green":
+            self.surf = pygame.image.load(GreenPotionBubble[self.BubbleCount]).convert_alpha()
+            self.BubbleCount += 1
+        elif self.etype == "Purple":
+            self.surf = pygame.image.load(PurplePotionBubble[self.BubbleCount]).convert_alpha()
+            self.BubbleCount += 1
 
         if self.rect.bottom >= SCREEN_HEIGHT - 15:
             self.kill()
@@ -255,7 +317,7 @@ LEVELUP = pygame.USEREVENT+2
 ADDPOTION = pygame.USEREVENT+3
 pygame.time.set_timer(ADDENEMY, EnemySpawnSpeed)
 pygame.time.set_timer(LEVELUP, 30000)
-pygame.time.set_timer(ADDPOTION, 1000)
+pygame.time.set_timer(ADDPOTION, 10000)
 
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -279,25 +341,25 @@ running = True
 while running:
     for event in pygame.event.get():
         if event.type == KEYDOWN:
-            if event.key == K_LEFT:
+            if event.key == K_LEFT or event.key == K_a:
                 player.moving = True
                 player.facingRight = False
                 player.facingLeft = True
                 player.facingUp = False
                 player.facingDown = False
-            elif event.key == K_RIGHT:
+            elif event.key == K_RIGHT or event.key == K_d:
                 player.moving = True
                 player.facingRight = True
                 player.facingLeft = False
                 player.facingUp = False
                 player.facingDown = False
-            elif event.key == K_UP:
+            elif event.key == K_UP or event.key == K_w:
                 player.moving = True
                 player.facingRight = False
                 player.facingLeft = False
                 player.facingUp = True
                 player.facingDown = False
-            elif event.key == K_DOWN:
+            elif event.key == K_DOWN or event.key == K_s:
                 player.moving = True
                 player.facingRight = False
                 player.facingLeft = False
@@ -306,16 +368,16 @@ while running:
             if event.key == K_ESCAPE:
                 running = False
         elif event.type == KEYUP:
-            if event.key == K_LEFT: 
+            if event.key == K_LEFT or event.key == K_a:
                 player.moving = False
                 player.isIdle = True
-            elif event.key == K_RIGHT:
+            elif event.key == K_RIGHT or event.key == K_d:
                 player.moving = False
                 player.isIdle = True
-            elif event.key == K_UP:
+            elif event.key == K_UP or event.key == K_w:
                 player.moving = False
                 player.isIdle = True
-            elif event.key == K_DOWN:
+            elif event.key == K_DOWN or event.key == K_s:
                 player.moving = False
                 player.isIdle = True
         elif event.type == QUIT:
@@ -327,9 +389,11 @@ while running:
         elif event.type == LEVELUP:
             Level, RED, BLUE, GREEN = LevelUp(Level, RED, BLUE, GREEN)
         elif event.type == ADDPOTION:
-            newPotion = Potions()
-            all_potions.add(newPotion)
-            all_Sprites.add(newPotion)
+            randnum = random.randint(1, 5)
+            if randnum == 1:
+                newPotion = Potions()
+                all_potions.add(newPotion)
+                all_Sprites.add(newPotion)
 
     pressed_keys = pygame.key.get_pressed()
     player.update(pressed_keys)
@@ -344,9 +408,26 @@ while running:
 
     PlayervsSpectre = pygame.sprite.spritecollideany(player, all_Enemies)
     if PlayervsSpectre != None:
-        PlayervsSpectre.kill()
-        player.Reset()
-        Lives -= 1
+        if player.isInvulnerable == False:
+            PlayervsSpectre.kill()
+            player.Reset()
+            Lives -= 1
+        else:
+            PlayervsSpectre.kill()
+
+    PlayerPotion = pygame.sprite.spritecollideany(player, all_potions)
+    if PlayerPotion != None:
+        if PlayerPotion.etype == "Blue":
+            player.Speed = player.Speed + (player.Speed/2)
+        if PlayerPotion.etype == "Red":
+            Lives += 1
+        if PlayerPotion.etype == "Yellow":
+            player.isInvulnerable = True
+        if PlayerPotion.etype == "Purple":
+            Enemy.CurrentSpeed = Enemy.CurrentSpeed/2
+        if PlayerPotion.etype == "Green":
+            EnemySpawnSpeed = EnemySpawnSpeed + (EnemySpawnSpeed/2)
+        PlayerPotion.kill()
 
     Level_Value = myFont.render(str(Level), 1, black)
     Lives_Value = myFont.render(str(Lives), 1, black)
