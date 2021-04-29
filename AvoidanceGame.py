@@ -31,6 +31,7 @@ EnemySpawnSpeed = 2000
 RED = 135
 BLUE = 205
 GREEN = 250
+Score = 0
 
 class Player(pygame.sprite.Sprite):
     walkCount = 0
@@ -44,6 +45,18 @@ class Player(pygame.sprite.Sprite):
     isIdle = True
     isFlashing = False
     isInvulnerable = False
+    IsBlue = False
+    IsYellow = False
+    IsPurple = False
+    IsGreen = False
+    BlueCount = 0
+    YellowCount = 0
+    GreenCount = 0
+    PurpleCount = 0
+    Limit = 10000
+    PlayerSpeedAdded = 0
+    EnemySpeedRemoved = 0
+    EnemySpawnRemoved = 0
     def __init__(self):
         super(Player, self).__init__()
         self.surf = pygame.image.load("Images/Swordsman/Swordsman-Idle-North_00.png").convert()
@@ -82,6 +95,61 @@ class Player(pygame.sprite.Sprite):
                                "Images/Swordsman/Swordsman-Idle-North_06.png", "Images/Swordsman/Swordsman-Idle-North_07.png",
                                "Images/Swordsman/Swordsman-Idle-North_08.png", "Images/Swordsman/Swordsman-Idle-North_09.png",
                                "Images/Swordsman/Swordsman-Idle-North_10.png"]
+
+        if self.IsBlue:
+            if self.BlueCount >= self.Limit:
+                self.IsBlue = False
+                self.BlueCount = 0
+            else:
+                self.BlueCount += 1
+        elif self.IsGreen:
+            if self.GreenCount >= self.Limit:
+                self.IsGreen = False
+                self.GreenCount = 0
+            else:
+                self.GreenCount += 1
+        elif self.IsYellow:
+            if self.YellowCount >= self.Limit:
+                self.IsYellow = False
+                self.YellowCount = 0
+            else:
+                self.YellowCount += 1
+        elif self.IsPurple:
+            if self.PurpleCount >= self.Limit:
+                self.IsPurple = False
+                self.PurpleCount = 0
+            else:
+                self.PurpleCount += 1
+
+        if self.IsBlue:
+            self.playerSpeedAdded = player.Speed / 2
+            self.Speed = player.Speed + (player.Speed / 2)
+            self.isInvulnerable = False
+            Enemy.CurrentSpeed += self.EnemySpeedRemoved
+
+        elif self.IsYellow:
+            self.Speed -= self.PlayerSpeedAdded
+            self.isInvulnerable = True
+            Enemy.CurrentSpeed += self.EnemySpeedRemoved
+
+        elif self.IsPurple:
+            self.EnemySpeedRemoved = (Enemy.CurrentSpeed / 2)
+            self.Speed -= self.PlayerSpeedAdded
+            self.isInvulnerable = False
+            Enemy.CurrentSpeed = Enemy.CurrentSpeed - (Enemy.CurrentSpeed / 2)
+
+        elif self.IsGreen:
+
+            self.Speed -= self.PlayerSpeedAdded
+            self.isInvulnerable = False
+            Enemy.CurrentSpeed += self.EnemySpeedRemoved
+
+        else:
+            self.Speed -= self.PlayerSpeedAdded
+            self.isInvulnerable = False
+            Enemy.CurrentSpeed += self.EnemySpeedRemoved
+
+
 
         if self.moving:
             if self.facingRight:
@@ -217,6 +285,7 @@ class Potions(pygame.sprite.Sprite):
     BubbleCount = 0
     PotionList = ["Blue", "Red", "Yellow", "Green", "Purple"]
 
+
     def __init__(self):
         super(Potions, self).__init__()
         Potion = random.choice(self.PotionList)
@@ -306,6 +375,8 @@ Lives_Label = myFont.render("Lives: ", 1, black)
 Lives_Value = myFont.render(str(Lives), 1, black)
 Level_Label = myFont.render("Level: ", 1, black)
 Level_Value = myFont.render(str(Level), 1, black)
+Score_Label = myFont.render("Score: ", 1, black)
+Score_Value = myFont.render(str(Score), 1, black)
 myEndFont = pygame.font.SysFont("Comicsans", 80)
 End_Label = myEndFont.render("GAME OVER!!!", 1, black)
 EnemyLevel = 1
@@ -315,9 +386,11 @@ clock = pygame.time.Clock()
 ADDENEMY = pygame.USEREVENT+1
 LEVELUP = pygame.USEREVENT+2
 ADDPOTION = pygame.USEREVENT+3
+SCOREUP = pygame.USEREVENT+4
 pygame.time.set_timer(ADDENEMY, EnemySpawnSpeed)
 pygame.time.set_timer(LEVELUP, 30000)
 pygame.time.set_timer(ADDPOTION, 10000)
+pygame.time.set_timer(SCOREUP, 10000)
 
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -394,6 +467,8 @@ while running:
                 newPotion = Potions()
                 all_potions.add(newPotion)
                 all_Sprites.add(newPotion)
+        elif event.type == SCOREUP:
+            Score += 10
 
     pressed_keys = pygame.key.get_pressed()
     player.update(pressed_keys)
@@ -418,24 +493,38 @@ while running:
     PlayerPotion = pygame.sprite.spritecollideany(player, all_potions)
     if PlayerPotion != None:
         if PlayerPotion.etype == "Blue":
-            player.Speed = player.Speed + (player.Speed/2)
+            Player.IsBlue = True
+            Player.IsYellow = False
+            Player.IsGreen = False
+            Player.IsPurple = False
         if PlayerPotion.etype == "Red":
             Lives += 1
         if PlayerPotion.etype == "Yellow":
-            player.isInvulnerable = True
+            Player.IsBlue = False
+            Player.IsYellow = True
+            Player.IsGreen = False
+            Player.IsPurple = False
         if PlayerPotion.etype == "Purple":
-            Enemy.CurrentSpeed = Enemy.CurrentSpeed/2
+            Player.IsBlue = False
+            Player.IsYellow = False
+            Player.IsGreen = False
+            Player.IsPurple = True
         if PlayerPotion.etype == "Green":
-            EnemySpawnSpeed = EnemySpawnSpeed + (EnemySpawnSpeed/2)
+            Player.IsBlue = False
+            Player.IsYellow = False
+            Player.IsGreen = True
+            Player.IsPurple = False
         PlayerPotion.kill()
 
     Level_Value = myFont.render(str(Level), 1, black)
     Lives_Value = myFont.render(str(Lives), 1, black)
-    screen.blit(Level_Label, (SCREEN_WIDTH-150, 2))
-    screen.blit(Level_Value, (SCREEN_WIDTH-60, 2))
+    Score_Value = myFont.render(str(Score), 1, black)
+    screen.blit(Level_Label, (SCREEN_WIDTH-110, 2))
+    screen.blit(Level_Value, (SCREEN_WIDTH-20, 2))
     screen.blit(Lives_Label, (SCREEN_WIDTH-490, 2))
     screen.blit(Lives_Value, (SCREEN_WIDTH-400, 2))
-
+    screen.blit(Score_Label, (SCREEN_WIDTH-350, 2))
+    screen.blit(Score_Value, (SCREEN_WIDTH-260, 2))
     pygame.display.flip()
 
     clock.tick(30)
