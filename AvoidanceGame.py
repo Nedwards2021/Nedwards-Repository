@@ -36,6 +36,7 @@ Score = 0
 class Player(pygame.sprite.Sprite):
     walkCount = 0
     moving = False
+    IsMoveable = True
     IdleCount = 0
     Speed = 10
     facingRight = False
@@ -53,7 +54,7 @@ class Player(pygame.sprite.Sprite):
     YellowCount = 0
     GreenCount = 0
     PurpleCount = 0
-    Limit = 10000
+    Limit = 1000
     PlayerSpeedAdded = 0
     EnemySpeedRemoved = 0
     EnemySpawnRemoved = 0
@@ -121,33 +122,37 @@ class Player(pygame.sprite.Sprite):
             else:
                 self.PurpleCount += 1
 
-        if self.IsBlue:
-            self.playerSpeedAdded = player.Speed / 2
-            self.Speed = player.Speed + (player.Speed / 2)
-            self.isInvulnerable = False
-            Enemy.CurrentSpeed += self.EnemySpeedRemoved
-
-        elif self.IsYellow:
-            self.Speed -= self.PlayerSpeedAdded
-            self.isInvulnerable = True
-            Enemy.CurrentSpeed += self.EnemySpeedRemoved
-
-        elif self.IsPurple:
-            self.EnemySpeedRemoved = (Enemy.CurrentSpeed / 2)
-            self.Speed -= self.PlayerSpeedAdded
-            self.isInvulnerable = False
-            Enemy.CurrentSpeed = Enemy.CurrentSpeed - (Enemy.CurrentSpeed / 2)
-
-        elif self.IsGreen:
-
-            self.Speed -= self.PlayerSpeedAdded
-            self.isInvulnerable = False
-            Enemy.CurrentSpeed += self.EnemySpeedRemoved
-
-        else:
-            self.Speed -= self.PlayerSpeedAdded
-            self.isInvulnerable = False
-            Enemy.CurrentSpeed += self.EnemySpeedRemoved
+        #if self.IsBlue:
+            # self.playerSpeedAdded = self.Speed/2
+            # self.Speed = self.Speed + (self.Speed/2)
+            # print(self.Speed)
+            # self.isInvulnerable = False
+            # Enemy.CurrentSpeed += self.EnemySpeedRemoved
+        #  self.EnemySpeedRemoved = 0
+        #elif self.IsYellow:
+            # self.Speed -= self.PlayerSpeedAdded
+            # self.isInvulnerable = True
+            # Enemy.CurrentSpeed += self.EnemySpeedRemoved
+            #  self.PlayerSpeedAdded = 0
+        #  self.EnemySpeedRemoved = 0
+            # elif self.IsPurple:
+            # self.EnemySpeedRemoved = (Enemy.CurrentSpeed / 2)
+            # self.Speed -= self.PlayerSpeedAdded
+            # self.isInvulnerable = False
+            # Enemy.CurrentSpeed = Enemy.CurrentSpeed - (Enemy.CurrentSpeed / 2)
+        # self.PlayerSpeedAdded = 0
+        #elif self.IsGreen:
+            #self.Speed -= self.PlayerSpeedAdded
+            #self.isInvulnerable = False
+            #Enemy.CurrentSpeed += self.EnemySpeedRemoved
+            #self.PlayerSpeedAdded = 0
+            #self.EnemySpeedRemoved = 0
+        #else:
+         #   self.Speed -= self.PlayerSpeedAdded
+          #  self.isInvulnerable = False
+           # Enemy.CurrentSpeed += self.EnemySpeedRemoved
+            #self.PlayerSpeedAdded = 0
+            #self.EnemySpeedRemoved = 0
 
 
 
@@ -180,23 +185,23 @@ class Player(pygame.sprite.Sprite):
             self.IdleCount += 1
 
 
-
-        if pressed_keys[K_LEFT]:
-            self.rect.move_ip(self.Speed * -1,0)
-        if pressed_keys[K_RIGHT]:
-            self.rect.move_ip(self.Speed,0)
-        if pressed_keys[K_UP]:
-            self.rect.move_ip(0, self.Speed * -1)
-        if pressed_keys[K_DOWN]:
-            self.rect.move_ip(0, self.Speed)
-        if pressed_keys[K_a]:
-            self.rect.move_ip(self.Speed * -1,0)
-        if pressed_keys[K_d]:
-            self.rect.move_ip(self.Speed,0)
-        if pressed_keys[K_w]:
-            self.rect.move_ip(0, self.Speed * -1)
-        if pressed_keys[K_s]:
-            self.rect.move_ip(0, self.Speed)
+        if self.IsMoveable:
+            if pressed_keys[K_LEFT]:
+                self.rect.move_ip(self.Speed * -1,0)
+            if pressed_keys[K_RIGHT]:
+                self.rect.move_ip(self.Speed,0)
+            if pressed_keys[K_UP]:
+                self.rect.move_ip(0, self.Speed * -1)
+            if pressed_keys[K_DOWN]:
+                self.rect.move_ip(0, self.Speed)
+            if pressed_keys[K_a]:
+                self.rect.move_ip(self.Speed * -1,0)
+            if pressed_keys[K_d]:
+                self.rect.move_ip(self.Speed,0)
+            if pressed_keys[K_w]:
+                self.rect.move_ip(0, self.Speed * -1)
+            if pressed_keys[K_s]:
+                self.rect.move_ip(0, self.Speed)
 
 
         #Keep the player from going off screen
@@ -215,6 +220,7 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.surf.get_rect(center=((SCREEN_WIDTH / 2), 650))
         self.isFlashing = True
         self.isInvulnerable = True
+        self.IsMoveable = True
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -223,6 +229,7 @@ class Enemy(pygame.sprite.Sprite):
     DeathCount = 0
     Dying = False
     CurrentSpeed = 4
+    IsAttacking = False
     def __init__(self):
         super(Enemy, self).__init__()
         self.surf = pygame.image.load("Images/Enemy/Enemy-Melee-Ghost-S_00.png").convert_alpha()
@@ -261,24 +268,32 @@ class Enemy(pygame.sprite.Sprite):
                       "Images/Enemy/Enemy-Melee-Death_18.png", "Images/Enemy/Enemy-Melee-Death_19.png",
                       "Images/Enemy/Enemy-Melee-Death_20.png", "Images/Enemy/Enemy-Melee-Death_21.png",
                       "Images/Enemy/Enemy-Melee-Death_22.png", "Images/Enemy/Enemy-Melee-Death_23.png",]
-        if self.WalkCount > len(EnemyMove) - 1:
-            self.WalkCount = 0
-        self.surf = pygame.image.load(EnemyMove[self.WalkCount]).convert_alpha()
-        self.WalkCount += 1
+        if self.IsAttacking != True:
+            if self.WalkCount > len(EnemyMove) - 1:
+                self.WalkCount = 0
+            self.surf = pygame.image.load(EnemyMove[self.WalkCount]).convert_alpha()
+            self.WalkCount += 1
 
-
-        if self.rect.bottom >= SCREEN_HEIGHT-15:
-            if self.DeathCount > len(EnemyDeath) - 1:
-                self.kill()
-                self.DeathCount = 0
+            if self.rect.bottom >= SCREEN_HEIGHT-15:
+                if self.DeathCount > len(EnemyDeath) - 1:
+                    self.kill()
+                    self.DeathCount = 0
+                else:
+                    self.surf = pygame.image.load(EnemyDeath[self.DeathCount]).convert_alpha()
+                    self.DeathCount += 1
             else:
-                self.surf = pygame.image.load(EnemyDeath[self.DeathCount]).convert_alpha()
-                self.DeathCount += 1
+                self.rect.move_ip(0, self.speed)
         else:
-            self.rect.move_ip(0, self.speed)
+            if self.AttackCount > len(EnemyAttack) - 1:
+                self.AttackCount = 0
+                self.IsAttacking = False
+            self.surf = pygame.image.load(EnemyAttack[self.AttackCount]).convert_alpha()
+            self.AttackCount += 1
 
     def Dying(self, value):
         self.Dying = value
+
+
 
 class Potions(pygame.sprite.Sprite):
     CurrSpeed = 4
@@ -484,6 +499,9 @@ while running:
     PlayervsSpectre = pygame.sprite.spritecollideany(player, all_Enemies)
     if PlayervsSpectre != None:
         if player.isInvulnerable == False:
+            Player.IsMoveable = False
+            Player.isInvulnerable = True
+            PlayervsSpectre.IsAttacking = True
             PlayervsSpectre.kill()
             player.Reset()
             Lives -= 1
@@ -515,6 +533,47 @@ while running:
             Player.IsGreen = True
             Player.IsPurple = False
         PlayerPotion.kill()
+
+        #if Player.IsBlue:
+            #Player.playerSpeedAdded += Player.Speed/2
+           # Player.Speed = Player.Speed + (Player.Speed/2)
+           # print(Player.Speed)
+           # print(Player.playerSpeedAdded)
+           # Player.isInvulnerable = False
+           # Enemy.CurrentSpeed += Player.EnemySpeedRemoved
+           # Player.EnemySpeedRemoved = 0
+        #elif Player.IsYellow:
+          # print(Player.playerSpeedAdded)
+           # print(f"Player.IsYellow{Player.Speed}")
+           # Player.Speed -= Player.PlayerSpeedAdded
+           # print(f"Player.IsYellow{Player.Speed}")
+           # Player.isInvulnerable = True
+           # Enemy.CurrentSpeed += Player.EnemySpeedRemoved
+           # Player.PlayerSpeedAdded = 0
+           # Player.EnemySpeedRemoved = 0
+        #elif Player.IsPurple:
+           # print(Player.playerSpeedAdded)
+           # Player.EnemySpeedRemoved += (Enemy.CurrentSpeed / 2)
+            #Player.Speed -= Player.PlayerSpeedAdded
+           # print(Player.Speed)
+           # Player.isInvulnerable = False
+           # Enemy.CurrentSpeed = Enemy.CurrentSpeed - (Enemy.CurrentSpeed / 2)
+           # Player.PlayerSpeedAdded = 0
+        #elif Player.IsGreen:
+           # print(Player.playerSpeedAdded)
+           # Player.Speed -= Player.PlayerSpeedAdded
+          #  print(Player.Speed)
+           # Player.isInvulnerable = False
+           # Enemy.CurrentSpeed += Player.EnemySpeedRemoved
+           # Player.PlayerSpeedAdded = 0
+           # Player.EnemySpeedRemoved = 0
+        #else:
+           # print(Player.playerSpeedAdded)
+           # Player.Speed -= Player.PlayerSpeedAdded
+           # Player.isInvulnerable = False
+          #  Enemy.CurrentSpeed += Player.EnemySpeedRemoved
+          #  Player.PlayerSpeedAdded = 0
+           # Player.EnemySpeedRemoved = 0
 
     Level_Value = myFont.render(str(Level), 1, black)
     Lives_Value = myFont.render(str(Lives), 1, black)
