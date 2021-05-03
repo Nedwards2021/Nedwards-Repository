@@ -4,6 +4,7 @@
 # 3/26/21
 # Avoidance Game
 #######################################
+import time
 
 import pygame
 import random
@@ -27,11 +28,12 @@ from pygame.locals import (
 
 SCREEN_WIDTH = 500
 SCREEN_HEIGHT = 700
-EnemySpawnSpeed = 2000
+EnemySpawnSpeed = 999999999
 RED = 135
 BLUE = 205
 GREEN = 250
 Score = 0
+GameOver = True
 
 class Player(pygame.sprite.Sprite):
     walkCount = 0
@@ -122,40 +124,6 @@ class Player(pygame.sprite.Sprite):
             else:
                 self.PurpleCount += 1
 
-        #if self.IsBlue:
-            # self.playerSpeedAdded = self.Speed/2
-            # self.Speed = self.Speed + (self.Speed/2)
-            # print(self.Speed)
-            # self.isInvulnerable = False
-            # Enemy.CurrentSpeed += self.EnemySpeedRemoved
-        #  self.EnemySpeedRemoved = 0
-        #elif self.IsYellow:
-            # self.Speed -= self.PlayerSpeedAdded
-            # self.isInvulnerable = True
-            # Enemy.CurrentSpeed += self.EnemySpeedRemoved
-            #  self.PlayerSpeedAdded = 0
-        #  self.EnemySpeedRemoved = 0
-            # elif self.IsPurple:
-            # self.EnemySpeedRemoved = (Enemy.CurrentSpeed / 2)
-            # self.Speed -= self.PlayerSpeedAdded
-            # self.isInvulnerable = False
-            # Enemy.CurrentSpeed = Enemy.CurrentSpeed - (Enemy.CurrentSpeed / 2)
-        # self.PlayerSpeedAdded = 0
-        #elif self.IsGreen:
-            #self.Speed -= self.PlayerSpeedAdded
-            #self.isInvulnerable = False
-            #Enemy.CurrentSpeed += self.EnemySpeedRemoved
-            #self.PlayerSpeedAdded = 0
-            #self.EnemySpeedRemoved = 0
-        #else:
-         #   self.Speed -= self.PlayerSpeedAdded
-          #  self.isInvulnerable = False
-           # Enemy.CurrentSpeed += self.EnemySpeedRemoved
-            #self.PlayerSpeedAdded = 0
-            #self.EnemySpeedRemoved = 0
-
-
-
         if self.moving:
             if self.facingRight:
                 if self.walkCount > len(playerAnimationRight) - 1:
@@ -219,7 +187,7 @@ class Player(pygame.sprite.Sprite):
         self.surf.set_colorkey((0, 0, 0), RLEACCEL)
         self.rect = self.surf.get_rect(center=((SCREEN_WIDTH / 2), 650))
         self.isFlashing = True
-        self.isInvulnerable = True
+        #self.isInvulnerable = True
         self.IsMoveable = True
 
 
@@ -298,7 +266,7 @@ class Enemy(pygame.sprite.Sprite):
 class Potions(pygame.sprite.Sprite):
     CurrSpeed = 4
     BubbleCount = 0
-    PotionList = ["Blue", "Red", "Yellow", "Green", "Purple"]
+    PotionList = ["Blue", "Yellow", "Red", "Green", "Purple"]
 
 
     def __init__(self):
@@ -363,6 +331,35 @@ class Potions(pygame.sprite.Sprite):
             self.surf = pygame.image.load(PurplePotionBubble[self.BubbleCount]).convert_alpha()
             self.BubbleCount += 1
 
+        if Player.IsBlue:
+            if Player.BlueCount >= Player.Limit:
+                Player.IsBlue = False
+                Player.BlueCount = 0
+            else:
+                Player.BlueCount += 1
+                print(Player.BlueCount)
+        elif Player.IsGreen:
+            if Player.GreenCount >= Player.Limit:
+                Player.IsGreen = False
+                Player.GreenCount = 0
+            else:
+                Player.GreenCount += 1
+                print(Player.GreenCount)
+        elif Player.IsYellow:
+            if Player.YellowCount >= Player.Limit:
+                Player.IsYellow = False
+                Player.YellowCount = 0
+            else:
+                Player.YellowCount += 1
+                print(Player.YellowCount)
+        elif Player.IsPurple:
+            if Player.PurpleCount >= Player.Limit:
+                Player.IsPurple = False
+                Player.PurpleCount = 0
+            else:
+                Player.PurpleCount += 1
+                print(Player.PurpleCount)
+
         if self.rect.bottom >= SCREEN_HEIGHT - 15:
             self.kill()
         else:
@@ -382,7 +379,7 @@ def LevelUp(Level, RED, BLUE, GREEN):
 #Main Code
 pygame.init()
 
-Lives = 10
+Lives = 100
 Level = 1
 black = (0, 0, 0)
 myFont = pygame.font.SysFont("Comicsans", 40)
@@ -394,6 +391,8 @@ Score_Label = myFont.render("Score: ", 1, black)
 Score_Value = myFont.render(str(Score), 1, black)
 myEndFont = pygame.font.SysFont("Comicsans", 80)
 End_Label = myEndFont.render("GAME OVER!!!", 1, black)
+End_Score = myEndFont.render("Final Score: ", 1, black)
+End_Score_Number = myEndFont.render(str(Score), 1, black)
 EnemyLevel = 1
 
 clock = pygame.time.Clock()
@@ -404,7 +403,7 @@ ADDPOTION = pygame.USEREVENT+3
 SCOREUP = pygame.USEREVENT+4
 pygame.time.set_timer(ADDENEMY, EnemySpawnSpeed)
 pygame.time.set_timer(LEVELUP, 30000)
-pygame.time.set_timer(ADDPOTION, 10000)
+pygame.time.set_timer(ADDPOTION, 1000)
 pygame.time.set_timer(SCOREUP, 10000)
 
 
@@ -455,6 +454,7 @@ while running:
                 player.facingDown = True
             if event.key == K_ESCAPE:
                 running = False
+                GameOver = False
         elif event.type == KEYUP:
             if event.key == K_LEFT or event.key == K_a:
                 player.moving = False
@@ -470,6 +470,7 @@ while running:
                 player.isIdle = True
         elif event.type == QUIT:
             running = False
+            GameOver = False
         elif event.type == ADDENEMY:
             newEnemy = Enemy()
             all_Enemies.add(newEnemy)
@@ -477,7 +478,7 @@ while running:
         elif event.type == LEVELUP:
             Level, RED, BLUE, GREEN = LevelUp(Level, RED, BLUE, GREEN)
         elif event.type == ADDPOTION:
-            randnum = random.randint(1, 5)
+            randnum = random.randint(1, 2)
             if randnum == 1:
                 newPotion = Potions()
                 all_potions.add(newPotion)
@@ -500,7 +501,7 @@ while running:
     if PlayervsSpectre != None:
         if player.isInvulnerable == False:
             Player.IsMoveable = False
-            Player.isInvulnerable = True
+            #Player.isInvulnerable = True
             PlayervsSpectre.IsAttacking = True
             PlayervsSpectre.kill()
             player.Reset()
@@ -534,56 +535,59 @@ while running:
             Player.IsPurple = False
         PlayerPotion.kill()
 
-        #if Player.IsBlue:
-            #Player.playerSpeedAdded += Player.Speed/2
-           # Player.Speed = Player.Speed + (Player.Speed/2)
-           # print(Player.Speed)
-           # print(Player.playerSpeedAdded)
-           # Player.isInvulnerable = False
-           # Enemy.CurrentSpeed += Player.EnemySpeedRemoved
-           # Player.EnemySpeedRemoved = 0
-        #elif Player.IsYellow:
-          # print(Player.playerSpeedAdded)
-           # print(f"Player.IsYellow{Player.Speed}")
-           # Player.Speed -= Player.PlayerSpeedAdded
-           # print(f"Player.IsYellow{Player.Speed}")
-           # Player.isInvulnerable = True
-           # Enemy.CurrentSpeed += Player.EnemySpeedRemoved
-           # Player.PlayerSpeedAdded = 0
-           # Player.EnemySpeedRemoved = 0
-        #elif Player.IsPurple:
-           # print(Player.playerSpeedAdded)
-           # Player.EnemySpeedRemoved += (Enemy.CurrentSpeed / 2)
-            #Player.Speed -= Player.PlayerSpeedAdded
-           # print(Player.Speed)
-           # Player.isInvulnerable = False
-           # Enemy.CurrentSpeed = Enemy.CurrentSpeed - (Enemy.CurrentSpeed / 2)
-           # Player.PlayerSpeedAdded = 0
-        #elif Player.IsGreen:
-           # print(Player.playerSpeedAdded)
-           # Player.Speed -= Player.PlayerSpeedAdded
-          #  print(Player.Speed)
-           # Player.isInvulnerable = False
-           # Enemy.CurrentSpeed += Player.EnemySpeedRemoved
-           # Player.PlayerSpeedAdded = 0
-           # Player.EnemySpeedRemoved = 0
-        #else:
-           # print(Player.playerSpeedAdded)
-           # Player.Speed -= Player.PlayerSpeedAdded
-           # Player.isInvulnerable = False
-          #  Enemy.CurrentSpeed += Player.EnemySpeedRemoved
-          #  Player.PlayerSpeedAdded = 0
-           # Player.EnemySpeedRemoved = 0
+        if Player.IsBlue:
+            Player.PlayerSpeedAdded += Player.Speed/2
+            Player.Speed = Player.Speed + (Player.Speed/2)
+            Player.isInvulnerable = False
+            Enemy.CurrentSpeed += Player.EnemySpeedRemoved
+            Player.EnemySpeedRemoved = 0
+        elif Player.IsYellow:
+            Player.Speed -= Player.PlayerSpeedAdded
+            Player.isInvulnerable = True
+            Enemy.CurrentSpeed += Player.EnemySpeedRemoved
+            Player.PlayerSpeedAdded = 0
+            Player.EnemySpeedRemoved = 0
+        elif Player.IsPurple:
+            Player.EnemySpeedRemoved += (Enemy.CurrentSpeed / 2)
+            Player.Speed -= Player.PlayerSpeedAdded
+            Player.isInvulnerable = False
+            Enemy.CurrentSpeed = Enemy.CurrentSpeed - (Enemy.CurrentSpeed / 2)
+            Player.PlayerSpeedAdded = 0
+        elif Player.IsGreen:
+            Player.Speed -= Player.PlayerSpeedAdded
+            Player.isInvulnerable = False
+            Enemy.CurrentSpeed += Player.EnemySpeedRemoved
+            Player.PlayerSpeedAdded = 0
+            Player.EnemySpeedRemoved = 0
 
-    Level_Value = myFont.render(str(Level), 1, black)
-    Lives_Value = myFont.render(str(Lives), 1, black)
-    Score_Value = myFont.render(str(Score), 1, black)
-    screen.blit(Level_Label, (SCREEN_WIDTH-110, 2))
-    screen.blit(Level_Value, (SCREEN_WIDTH-20, 2))
-    screen.blit(Lives_Label, (SCREEN_WIDTH-490, 2))
-    screen.blit(Lives_Value, (SCREEN_WIDTH-400, 2))
-    screen.blit(Score_Label, (SCREEN_WIDTH-350, 2))
-    screen.blit(Score_Value, (SCREEN_WIDTH-260, 2))
+    
+
+    if Lives > 0:
+        Level_Value = myFont.render(str(Level), 1, black)
+        Lives_Value = myFont.render(str(Lives), 1, black)
+        Score_Value = myFont.render(str(Score), 1, black)
+        screen.blit(Level_Label, (SCREEN_WIDTH-110, 2))
+        screen.blit(Level_Value, (SCREEN_WIDTH-20, 2))
+        screen.blit(Lives_Label, (SCREEN_WIDTH-490, 2))
+        screen.blit(Lives_Value, (SCREEN_WIDTH-400, 2))
+        screen.blit(Score_Label, (SCREEN_WIDTH-350, 2))
+        screen.blit(Score_Value, (SCREEN_WIDTH-260, 2))
+    else:
+        running = False
+        for entity in all_Sprites:
+            entity.kill()
+
+
+
     pygame.display.flip()
-
     clock.tick(30)
+
+
+if GameOver:
+    End_Score_Number = myEndFont.render(str(Score), 1, black)
+    screen.blit(End_Label, (SCREEN_WIDTH-470, SCREEN_HEIGHT/2-50))
+    screen.blit(End_Score, (SCREEN_WIDTH-470, (SCREEN_HEIGHT/2)))
+    screen.blit(End_Score_Number, (SCREEN_WIDTH-100, (SCREEN_HEIGHT/2)))
+    pygame.display.flip()
+    time.sleep(10)
+
