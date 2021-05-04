@@ -59,7 +59,7 @@ class Player(pygame.sprite.Sprite):
     PurpleCount = 0
     Limit = 300
     FlashCount = 0
-    FlashLimit = 60
+    FlashLimit = 120
     PlayerSpeedAdded = 0
     EnemySpeedRemoved = 0
     EnemySpawnAdded = 0
@@ -165,7 +165,7 @@ class Player(pygame.sprite.Sprite):
         self.surf.set_colorkey((0, 0, 0), RLEACCEL)
         self.rect = self.surf.get_rect(center=((SCREEN_WIDTH / 2), 650))
         self.isFlashing = True
-        #self.isInvulnerable = True
+        self.isInvulnerable = True
         self.IsMovable = True
 
 
@@ -478,9 +478,10 @@ while running:
     if PlayervsSpectre != None:
         if player.isInvulnerable == False:
             Player.IsMovable = False
-            #Player.isInvulnerable = True
+            Player.isInvulnerable = True
             PlayervsSpectre.IsAttacking = True
             PlayervsSpectre.kill()
+            Player.isFlashing = True
             player.Reset()
             Lives -= 1
         else:
@@ -591,7 +592,7 @@ while running:
             Player.EnemySpeedRemoved = 0
             Player.EnemySpawnAdded = 0
 
-    print(Player.isFlashing)
+
     if Player.isFlashing:
         if Player.FlashCount >= Player.FlashLimit:
             Player.isFlashing = False
