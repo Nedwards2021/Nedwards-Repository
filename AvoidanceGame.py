@@ -40,6 +40,7 @@ class Player(pygame.sprite.Sprite):
     moving = False
     IsMovable = True
     IdleCount = 0
+    AttackCount = 0
     Speed = 10
     facingRight = False
     facingLeft = False
@@ -53,6 +54,7 @@ class Player(pygame.sprite.Sprite):
     IsPurple = False
     IsGreen = False
     IsColored = False
+    IsAttacking = False
     BlueCount = 0
     YellowCount = 0
     GreenCount = 0
@@ -101,6 +103,12 @@ class Player(pygame.sprite.Sprite):
                                "Images/Swordsman/Swordsman-Idle-North_06.png", "Images/Swordsman/Swordsman-Idle-North_07.png",
                                "Images/Swordsman/Swordsman-Idle-North_08.png", "Images/Swordsman/Swordsman-Idle-North_09.png",
                                "Images/Swordsman/Swordsman-Idle-North_10.png"]
+        PlayerAttackAnimation = ["Images/Swordsman/Swordsman-Attack-North_00.png", "Images/Swordsman/Swordsman-Attack-North_01.png",
+                                 "Images/Swordsman/Swordsman-Attack-North_02.png", "Images/Swordsman/Swordsman-Attack-North_03.png",
+                                 "Images/Swordsman/Swordsman-Attack-North_04.png", "Images/Swordsman/Swordsman-Attack-North_05.png",
+                                 "Images/Swordsman/Swordsman-Attack-North_06.png", "Images/Swordsman/Swordsman-Attack-North_07.png",
+                                 "Images/Swordsman/Swordsman-Attack-North_08.png", "Images/Swordsman/Swordsman-Attack-North_09.png",
+                                 "Images/Swordsman/Swordsman-Attack-North_10.png"]
 
         if self.moving:
             if self.facingRight:
@@ -129,6 +137,18 @@ class Player(pygame.sprite.Sprite):
                 self.IdleCount = 0
             self.surf = pygame.image.load(PlayerIdleAnimation[self.IdleCount]).convert_alpha()
             self.IdleCount += 1
+        elif self.IsAttacking:
+            if self.AttackCount > len(PlayerAttackAnimation) -1:
+                self.AttackCount = 0
+                self.isIdle = True
+                self.IsAttacking = False
+                self.isInvulnerable = False
+                self.IsMovable = True
+            else:
+                if self.AttackCount % 3 == 0:
+                    self.surf = pygame.image.load(PlayerAttackAnimation[self.AttackCount]).convert_alpha()
+                self.AttackCount += 1
+
 
 
         if self.IsMovable:
@@ -215,26 +235,29 @@ class Enemy(pygame.sprite.Sprite):
                       "Images/Enemy/Enemy-Melee-Death_20.png", "Images/Enemy/Enemy-Melee-Death_21.png",
                       "Images/Enemy/Enemy-Melee-Death_22.png", "Images/Enemy/Enemy-Melee-Death_23.png",]
         if self.IsAttacking != True:
-            if self.WalkCount > len(EnemyMove) - 1:
+            if self.WalkCount > len(EnemyMove)-1:
                 self.WalkCount = 0
             self.surf = pygame.image.load(EnemyMove[self.WalkCount]).convert_alpha()
             self.WalkCount += 1
-
-            if self.rect.bottom >= SCREEN_HEIGHT-15:
-                if self.DeathCount > len(EnemyDeath) - 1:
-                    self.kill()
-                    self.DeathCount = 0
-                else:
-                    self.surf = pygame.image.load(EnemyDeath[self.DeathCount]).convert_alpha()
-                    self.DeathCount += 1
-            else:
-                self.rect.move_ip(0, self.speed)
         else:
-            if self.AttackCount > len(EnemyAttack) - 1:
+            if self.AttackCount > len(EnemyAttack)-1:
                 self.AttackCount = 0
                 self.IsAttacking = False
+                player.reset()
             self.surf = pygame.image.load(EnemyAttack[self.AttackCount]).convert_alpha()
             self.AttackCount += 1
+
+
+        if self.rect.bottom >= SCREEN_HEIGHT-15:
+            if self.DeathCount > len(EnemyDeath) - 1:
+                self.kill()
+                self.DeathCount = 0
+            else:
+                self.surf = pygame.image.load(EnemyDeath[self.DeathCount]).convert_alpha()
+                self.DeathCount += 1
+        else:
+            if self.IsAttacking != True:
+                self.rect.move_ip(0, self.speed)
 
     def Dying(self, value):
         self.Dying = value
@@ -316,7 +339,8 @@ class Potions(pygame.sprite.Sprite):
 
 def LevelUp(Level, RED, BLUE, GREEN):
     pygame.time.set_timer(ADDENEMY, EnemySpawnSpeed-30)
-    Enemy.CurrentSpeed = Enemy.CurrentSpeed + 1
+    Enemy.CurrentSpeed += 1
+    Potions.CurrSpeed += 1
     Level += 1
     RED = random.randint(10, 245)
     BLUE = random.randint(10, 245)
@@ -328,7 +352,7 @@ def LevelUp(Level, RED, BLUE, GREEN):
 #Main Code
 pygame.init()
 
-Lives = 100
+Lives = 10
 Level = 1
 black = (0, 0, 0)
 myFont = pygame.font.SysFont("Comicsans", 40)
@@ -404,6 +428,12 @@ while running:
             if event.key == K_ESCAPE:
                 running = False
                 GameOver = False
+            if event.key == K_SPACE:
+                player.moving = False
+                player.isIdle = False
+                player.IsAttacking = True
+                player.IsMovable = False
+                player.isInvulnerable = True
         elif event.type == KEYUP:
             if event.key == K_LEFT or event.key == K_a:
                 player.moving = False
@@ -445,44 +475,43 @@ while running:
     for entity in all_Sprites:
         screen.blit(entity.surf, entity.rect)
 
-    if Player.IsBlue:
-        if Player.BlueCount >= Player.Limit:
-            Player.IsBlue = False
-            Player.IsColored = False
-            Player.BlueCount = 0
+    if player.IsBlue:
+        if player.BlueCount >= Player.Limit:
+            player.IsBlue = False
+            player.IsColored = False
+            player.BlueCount = 0
         else:
-            Player.BlueCount += 1
-    elif Player.IsGreen:
-        if Player.GreenCount >= Player.Limit:
-            Player.IsGreen = False
-            Player.IsColored = False
-            Player.GreenCount = 0
+            player.BlueCount += 1
+    elif player.IsGreen:
+        if player.GreenCount >= player.Limit:
+            player.IsGreen = False
+            player.IsColored = False
+            player.GreenCount = 0
         else:
-            Player.GreenCount += 1
-    elif Player.IsYellow:
-        if Player.YellowCount >= Player.Limit:
-            Player.IsYellow = False
-            Player.IsColored = False
-            Player.YellowCount = 0
+            player.GreenCount += 1
+    elif player.IsYellow:
+        if player.YellowCount >= player.Limit:
+            player.IsYellow = False
+            player.IsColored = False
+            player.YellowCount = 0
         else:
-            Player.YellowCount += 1
-    elif Player.IsPurple:
-        if Player.PurpleCount >= Player.Limit:
-            Player.IsPurple = False
-            Player.IsColored = False
-            Player.PurpleCount = 0
+            player.YellowCount += 1
+    elif player.IsPurple:
+        if player.PurpleCount >= player.Limit:
+            player.IsPurple = False
+            player.IsColored = False
+            player.PurpleCount = 0
         else:
-            Player.PurpleCount += 1
+            player.PurpleCount += 1
 
     PlayervsSpectre = pygame.sprite.spritecollideany(player, all_Enemies)
+    print(player.isInvulnerable)
     if PlayervsSpectre != None:
         if player.isInvulnerable == False:
-            Player.IsMovable = False
-            Player.isInvulnerable = True
+            player.IsMovable = False
+            player.isInvulnerable = True
             PlayervsSpectre.IsAttacking = True
-            PlayervsSpectre.kill()
-            Player.isFlashing = True
-            player.Reset()
+            player.isFlashing = True
             Lives -= 1
         else:
             PlayervsSpectre.kill()
@@ -490,117 +519,119 @@ while running:
     PlayerPotion = pygame.sprite.spritecollideany(player, all_potions)
     if PlayerPotion != None:
         if PlayerPotion.etype == "Blue":
-            Player.IsColored = True
-            Player.IsBlue = True
-            Player.IsYellow = False
-            Player.IsGreen = False
-            Player.IsPurple = False
+            player.IsColored = True
+            player.IsBlue = True
+            player.IsYellow = False
+            player.IsGreen = False
+            player.IsPurple = False
         if PlayerPotion.etype == "Red":
             Lives += 1
         if PlayerPotion.etype == "Yellow":
-            Player.IsColored = True
-            Player.IsBlue = False
-            Player.IsYellow = True
-            Player.IsGreen = False
-            Player.IsPurple = False
+            player.IsColored = True
+            player.IsBlue = False
+            player.IsYellow = True
+            player.IsGreen = False
+            player.IsPurple = False
         if PlayerPotion.etype == "Purple":
-            Player.IsColored = True
-            Player.IsBlue = False
-            Player.IsYellow = False
-            Player.IsGreen = False
-            Player.IsPurple = True
+            player.IsColored = True
+            player.IsBlue = False
+            player.IsYellow = False
+            player.IsGreen = False
+            player.IsPurple = True
         if PlayerPotion.etype == "Green":
-            Player.IsColored = True
-            Player.IsBlue = False
-            Player.IsYellow = False
-            Player.IsGreen = True
-            Player.IsPurple = False
+            player.IsColored = True
+            player.IsBlue = False
+            player.IsYellow = False
+            player.IsGreen = True
+            player.IsPurple = False
         PlayerPotion.kill()
 
-        if Player.IsBlue:
-            Player.BlueCount = 0
-            Player.YellowCount = 0
-            Player.GreenCount = 0
-            Player.PurpleCount = 0
-            Player.PlayerSpeedAdded += Player.Speed/2
-            Player.Speed = Player.Speed + (Player.Speed/2)
-            Player.isInvulnerable = False
-            Enemy.CurrentSpeed += Player.EnemySpeedRemoved
-            EnemySpawnSpeed -= Player.EnemySpawnAdded
-            Player.EnemySpeedRemoved = 0
-            Player.EnemySpawnAdded = 0
-        elif Player.IsYellow:
-            Player.BlueCount = 0
-            Player.YellowCount = 0
-            Player.GreenCount = 0
-            Player.PurpleCount = 0
-            Player.Speed -= Player.PlayerSpeedAdded
-            Player.isInvulnerable = True
-            Enemy.CurrentSpeed += Player.EnemySpeedRemoved
-            EnemySpawnSpeed -= Player.EnemySpawnAdded
-            Player.PlayerSpeedAdded = 0
-            Player.EnemySpeedRemoved = 0
-            Player.EnemySpawnAdded = 0
-        elif Player.IsPurple:
-            Player.BlueCount = 0
-            Player.YellowCount = 0
-            Player.GreenCount = 0
-            Player.PurpleCount = 0
-            Player.EnemySpeedRemoved += (Enemy.CurrentSpeed / 2)
-            Player.Speed -= Player.PlayerSpeedAdded
-            Player.isInvulnerable = False
+        if player.IsBlue:
+            player.BlueCount = 0
+            player.YellowCount = 0
+            player.GreenCount = 0
+            player.PurpleCount = 0
+            player.PlayerSpeedAdded += player.Speed/2
+            player.Speed = player.Speed + (player.Speed/2)
+            player.isInvulnerable = False
+            Enemy.CurrentSpeed += player.EnemySpeedRemoved
+            EnemySpawnSpeed -= player.EnemySpawnAdded
+            player.EnemySpeedRemoved = 0
+            player.EnemySpawnAdded = 0
+        elif player.IsYellow:
+            player.BlueCount = 0
+            player.YellowCount = 0
+            player.GreenCount = 0
+            player.PurpleCount = 0
+            player.Speed -= player.PlayerSpeedAdded
+            player.isInvulnerable = True
+            Enemy.CurrentSpeed += player.EnemySpeedRemoved
+            EnemySpawnSpeed -= player.EnemySpawnAdded
+            player.PlayerSpeedAdded = 0
+            player.EnemySpeedRemoved = 0
+            player.EnemySpawnAdded = 0
+        elif player.IsPurple:
+            player.BlueCount = 0
+            player.YellowCount = 0
+            player.GreenCount = 0
+            player.PurpleCount = 0
+            player.EnemySpeedRemoved += (Enemy.CurrentSpeed / 2)
+            player.Speed -= player.PlayerSpeedAdded
+            player.isInvulnerable = False
             Enemy.CurrentSpeed = Enemy.CurrentSpeed - (Enemy.CurrentSpeed / 2)
-            EnemySpawnSpeed -= Player.EnemySpawnAdded
-            Player.PlayerSpeedAdded = 0
-            Player.EnemySpawnAdded = 0
-        elif Player.IsGreen:
-            Player.BlueCount = 0
-            Player.YellowCount = 0
-            Player.GreenCount = 0
-            Player.PurpleCount = 0
-            Player.EnemySpawnAdded = EnemySpawnSpeed//2
-            Player.Speed -= Player.PlayerSpeedAdded
-            Player.isInvulnerable = False
-            Enemy.CurrentSpeed += Player.EnemySpeedRemoved
-            EnemySpawnSpeed += Player.EnemySpawnAdded
-            Player.PlayerSpeedAdded = 0
-            Player.EnemySpeedRemoved = 0
+            EnemySpawnSpeed -= player.EnemySpawnAdded
+            player.PlayerSpeedAdded = 0
+            player.EnemySpawnAdded = 0
+        elif player.IsGreen:
+            player.BlueCount = 0
+            player.YellowCount = 0
+            player.GreenCount = 0
+            player.PurpleCount = 0
+            player.EnemySpawnAdded = EnemySpawnSpeed//2
+            player.Speed -= player.PlayerSpeedAdded
+            player.isInvulnerable = False
+            Enemy.CurrentSpeed += player.EnemySpeedRemoved
+            EnemySpawnSpeed += player.EnemySpawnAdded
+            player.PlayerSpeedAdded = 0
+            player.EnemySpeedRemoved = 0
 
 
-    if Player.IsColored != True:
+    if player.IsColored != True:
         if player.isFlashing != True:
-            Player.BlueCount = 0
-            Player.YellowCount = 0
-            Player.GreenCount = 0
-            Player.PurpleCount = 0
-            Player.Speed -= Player.PlayerSpeedAdded
-            Player.isInvulnerable = False
-            Enemy.CurrentSpeed += Player.EnemySpeedRemoved
-            EnemySpawnSpeed -= Player.EnemySpawnAdded
-            Player.PlayerSpeedAdded = 0
-            Player.EnemySpeedRemoved = 0
-            Player.EnemySpawnAdded = 0
+            player.BlueCount = 0
+            player.YellowCount = 0
+            player.GreenCount = 0
+            player.PurpleCount = 0
+            player.Speed -= player.PlayerSpeedAdded
+            player.isInvulnerable = False
+            Enemy.CurrentSpeed += player.EnemySpeedRemoved
+            EnemySpawnSpeed -= player.EnemySpawnAdded
+            player.PlayerSpeedAdded = 0
+            player.EnemySpeedRemoved = 0
+            player.EnemySpawnAdded = 0
         else:
-            Player.BlueCount = 0
-            Player.YellowCount = 0
-            Player.GreenCount = 0
-            Player.PurpleCount = 0
-            Player.Speed -= Player.PlayerSpeedAdded
-            Enemy.CurrentSpeed += Player.EnemySpeedRemoved
-            EnemySpawnSpeed -= Player.EnemySpawnAdded
-            Player.PlayerSpeedAdded = 0
-            Player.EnemySpeedRemoved = 0
-            Player.EnemySpawnAdded = 0
+            player.BlueCount = 0
+            player.YellowCount = 0
+            player.GreenCount = 0
+            player.PurpleCount = 0
+            player.Speed -= player.PlayerSpeedAdded
+            Enemy.CurrentSpeed += player.EnemySpeedRemoved
+            EnemySpawnSpeed -= player.EnemySpawnAdded
+            player.PlayerSpeedAdded = 0
+            player.EnemySpeedRemoved = 0
+            player.EnemySpawnAdded = 0
 
 
-    if Player.isFlashing:
-        if Player.FlashCount >= Player.FlashLimit:
-            Player.isFlashing = False
-            Player.isInvulnerable = False
-            Player.FlashCount = 0
+    if player.isFlashing:
+        if player.FlashCount >= player.FlashLimit:
+            player.isFlashing = False
+            print("jbioegdkjbosog")
+            player.isInvulnerable = False
+            print(player.isInvulnerable)
+            player.FlashCount = 0
         else:
-            Player.FlashCount += 1
-            print(Player.FlashCount)
+            player.FlashCount += 1
+            print(player.FlashCount)
 
 
     if Lives > 0:
@@ -625,10 +656,13 @@ while running:
 
 
 if GameOver:
+    for entity in all_Enemies:
+        entity.kill()
+    pygame.display.flip()
     End_Score_Number = myEndFont.render(str(Score), 1, black)
     screen.blit(End_Label, (SCREEN_WIDTH-470, SCREEN_HEIGHT/2-50))
     screen.blit(End_Score, (SCREEN_WIDTH-470, (SCREEN_HEIGHT/2)))
     screen.blit(End_Score_Number, (SCREEN_WIDTH-100, (SCREEN_HEIGHT/2)))
     pygame.display.flip()
-    time.sleep(10)
+    time.sleep(5)
 
