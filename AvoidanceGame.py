@@ -55,13 +55,14 @@ class Player(pygame.sprite.Sprite):
     IsGreen = False
     IsColored = False
     IsAttacking = False
+    IsCollideable = True
     BlueCount = 0
     YellowCount = 0
     GreenCount = 0
     PurpleCount = 0
     Limit = 300
     FlashCount = 0
-    FlashLimit = 120
+    FlashLimit = 150
     PlayerSpeedAdded = 0
     EnemySpeedRemoved = 0
     EnemySpawnAdded = 0
@@ -115,27 +116,42 @@ class Player(pygame.sprite.Sprite):
                 if self.walkCount > len(playerAnimationRight) - 1:
                     self.walkCount = 0
                 self.surf = pygame.image.load(playerAnimationRight[self.walkCount]).convert_alpha()
+                if self.isFlashing:
+                    if self.FlashCount % 5 == 0:
+                        player.surf = pygame.image.load("Images/Swordsman/Swordsman_Flash.png").convert_alpha()
                 self.walkCount += 1
             elif self.facingLeft:
                 if self.walkCount > len(playerAnimationLeft) - 1:
                     self.walkCount = 0
                 self.surf = pygame.image.load(playerAnimationLeft[self.walkCount]).convert_alpha()
+                if self.isFlashing:
+                    if self.FlashCount % 5 == 0:
+                        player.surf = pygame.image.load("Images/Swordsman/Swordsman_Flash.png").convert_alpha()
                 self.walkCount += 1
             elif self.facingUp:
                 if self.walkCount > len(playerAnimationUp) - 1:
                     self.walkCount = 0
                 self.surf = pygame.image.load(playerAnimationUp[self.walkCount]).convert_alpha()
+                if self.isFlashing:
+                    if self.FlashCount % 5 == 0:
+                        player.surf = pygame.image.load("Images/Swordsman/Swordsman_Flash.png").convert_alpha()
                 self.walkCount += 1
             elif self.facingDown:
                 if self.walkCount > len(playerAnimationDown) - 1:
                     self.walkCount = 0
                 self.surf = pygame.image.load(playerAnimationDown[self.walkCount]).convert_alpha()
+                if self.isFlashing:
+                    if self.FlashCount % 5 == 0:
+                        player.surf = pygame.image.load("Images/Swordsman/Swordsman_Flash.png").convert_alpha()
                 self.walkCount += 1
         elif self.isIdle:
             self.moving = False
             if self.IdleCount > len(PlayerIdleAnimation) - 1:
                 self.IdleCount = 0
             self.surf = pygame.image.load(PlayerIdleAnimation[self.IdleCount]).convert_alpha()
+            if self.isFlashing:
+                if self.FlashCount % 5 == 0:
+                    player.surf = pygame.image.load("Images/Swordsman/Swordsman_Flash.png").convert_alpha()
             self.IdleCount += 1
         elif self.IsAttacking:
             if self.AttackCount > len(PlayerAttackAnimation) -1:
@@ -187,6 +203,7 @@ class Player(pygame.sprite.Sprite):
         self.isFlashing = True
         self.isInvulnerable = True
         self.IsMovable = True
+        self.IsCollideable = True
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -243,7 +260,7 @@ class Enemy(pygame.sprite.Sprite):
             if self.AttackCount > len(EnemyAttack)-1:
                 self.AttackCount = 0
                 self.IsAttacking = False
-                player.reset()
+                player.Reset()
             self.surf = pygame.image.load(EnemyAttack[self.AttackCount]).convert_alpha()
             self.AttackCount += 1
 
@@ -251,6 +268,8 @@ class Enemy(pygame.sprite.Sprite):
         if self.rect.bottom >= SCREEN_HEIGHT-15:
             if self.DeathCount > len(EnemyDeath) - 1:
                 self.kill()
+                if self.IsAttacking == True:
+                    player.IsMovable = True
                 self.DeathCount = 0
             else:
                 self.surf = pygame.image.load(EnemyDeath[self.DeathCount]).convert_alpha()
@@ -341,6 +360,7 @@ def LevelUp(Level, RED, BLUE, GREEN):
     pygame.time.set_timer(ADDENEMY, EnemySpawnSpeed-30)
     Enemy.CurrentSpeed += 1
     Potions.CurrSpeed += 1
+    Player.Speed += 2
     Level += 1
     RED = random.randint(10, 245)
     BLUE = random.randint(10, 245)
@@ -376,7 +396,7 @@ ADDPOTION = pygame.USEREVENT+3
 SCOREUP = pygame.USEREVENT+4
 pygame.time.set_timer(ADDENEMY, EnemySpawnSpeed)
 pygame.time.set_timer(LEVELUP, 30000)
-pygame.time.set_timer(ADDPOTION, 1000)
+pygame.time.set_timer(ADDPOTION, 10000)
 pygame.time.set_timer(SCOREUP, 10000)
 
 
@@ -457,7 +477,7 @@ while running:
         elif event.type == LEVELUP:
             Level, RED, BLUE, GREEN = LevelUp(Level, RED, BLUE, GREEN)
         elif event.type == ADDPOTION:
-            randnum = random.randint(1, 2)
+            randnum = random.randint(1, 3)
             if randnum == 1:
                 newPotion = Potions()
                 all_potions.add(newPotion)
@@ -506,15 +526,18 @@ while running:
 
     PlayervsSpectre = pygame.sprite.spritecollideany(player, all_Enemies)
     print(player.isInvulnerable)
-    if PlayervsSpectre != None:
-        if player.isInvulnerable == False:
-            player.IsMovable = False
-            player.isInvulnerable = True
-            PlayervsSpectre.IsAttacking = True
-            player.isFlashing = True
-            Lives -= 1
-        else:
-            PlayervsSpectre.kill()
+    if player.IsCollideable == True:
+        if PlayervsSpectre != None:
+            if player.isInvulnerable == False:
+                player.IsMovable = False
+                player.isInvulnerable = True
+                PlayervsSpectre.IsAttacking = True
+                player.isFlashing = True
+                Lives -= 1
+                player.IsCollideable = False
+            else:
+                PlayervsSpectre.kill()
+                player.IsMovable = True
 
     PlayerPotion = pygame.sprite.spritecollideany(player, all_potions)
     if PlayerPotion != None:
