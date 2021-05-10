@@ -8,6 +8,14 @@ import time
 
 import pygame
 import random
+import sqlite3
+from sqlite3 import Error
+import GameLogon as GL
+
+timesPlayed = 0
+enemyKilled = 0
+fruitEaten = 0
+highScore = 0
 
 from pygame.locals import (
     RLEACCEL,
@@ -23,7 +31,8 @@ from pygame.locals import (
     K_w,
     K_a,
     K_s,
-    K_d
+    K_d,
+    K_RETURN
     )
 
 SCREEN_WIDTH = 500
@@ -359,13 +368,47 @@ class Potions(pygame.sprite.Sprite):
 def LevelUp(Level, RED, BLUE, GREEN):
     pygame.time.set_timer(ADDENEMY, EnemySpawnSpeed-30)
     Enemy.CurrentSpeed += 1
-    Potions.CurrSpeed += 1
     Player.Speed += 2
     Level += 1
     RED = random.randint(10, 245)
     BLUE = random.randint(10, 245)
     GREEN = random.randint(10, 245)
     return Level, RED, BLUE, GREEN
+
+def getDbConnection():
+    conn = None
+    try:
+        conn = sqlite3.connect("GameStats.db")
+    except Error as e:
+        print(e)
+    return conn
+
+def saveGameStats(userName, highScore):
+    conn = getDbConnection()
+    curr = conn.cursor()
+    updateSql = "UPDATE Stats set HighScore = ? WHERE UserID = ?"
+    record = (userName, highScore)
+    print(f"this is the sql update: {updateSql}")
+    curr.execute(updateSql, record)
+    print(record)
+    conn.commit()
+    conn.close()
+
+user_name = GL.GameLogon()
+
+con = getDbConnection()
+curr = con.cursor()
+
+#rows = curr.execute("SELECT * FROM Stats").fetchall()
+rows = curr.execute("SELECT * FROM Stats WHERE UserID = ?", (user_name,)).fetchall()
+if len(rows) == 0:
+    record = (user_name, 0, 0, 0, 0)
+    sql = "INSERT INTO Stats (UserId,HighScore,TimesPlayed,EnemyKilled,FruitEaten) values(?,?,?,?,?)"
+    curr.execute(sql, record)
+    con.commit()
+else:
+    for row in rows:
+        highScore = row[1]
 
 
 
@@ -382,6 +425,8 @@ Level_Label = myFont.render("Level: ", 1, black)
 Level_Value = myFont.render(str(Level), 1, black)
 Score_Label = myFont.render("Score: ", 1, black)
 Score_Value = myFont.render(str(Score), 1, black)
+highScore_Label = myFont.render("High Score: ", 1, black)
+highScore_Value = myFont.render(str(highScore), 1, black)
 myEndFont = pygame.font.SysFont("Comicsans", 80)
 End_Label = myEndFont.render("GAME OVER!!!", 1, black)
 End_Score = myEndFont.render("Final Score: ", 1, black)
@@ -417,6 +462,8 @@ all_potions.add(potion)
 all_Sprites.add(potion)
 
 running = True
+
+
 
 while running:
     for event in pygame.event.get():
@@ -468,6 +515,7 @@ while running:
                 player.moving = False
                 player.isIdle = True
         elif event.type == QUIT:
+            saveGameStats(user_name, highScore)
             running = False
             GameOver = False
         elif event.type == ADDENEMY:
@@ -525,7 +573,6 @@ while running:
             player.PurpleCount += 1
 
     PlayervsSpectre = pygame.sprite.spritecollideany(player, all_Enemies)
-    print(player.isInvulnerable)
     if player.IsCollideable == True:
         if PlayervsSpectre != None:
             if player.isInvulnerable == False:
@@ -648,16 +695,16 @@ while running:
     if player.isFlashing:
         if player.FlashCount >= player.FlashLimit:
             player.isFlashing = False
-            print("jbioegdkjbosog")
             player.isInvulnerable = False
-            print(player.isInvulnerable)
             player.FlashCount = 0
         else:
             player.FlashCount += 1
-            print(player.FlashCount)
 
 
     if Lives > 0:
+        if Score > highScore:
+            highScore = Score
+            highScore_Value = myFont.render(str(highScore), 1, black)
         Level_Value = myFont.render(str(Level), 1, black)
         Lives_Value = myFont.render(str(Lives), 1, black)
         Score_Value = myFont.render(str(Score), 1, black)
@@ -667,6 +714,8 @@ while running:
         screen.blit(Lives_Value, (SCREEN_WIDTH-400, 2))
         screen.blit(Score_Label, (SCREEN_WIDTH-350, 2))
         screen.blit(Score_Value, (SCREEN_WIDTH-260, 2))
+        screen.blit(highScore_Label, (SCREEN_WIDTH-350, 35))
+        screen.blit(highScore_Value, (SCREEN_WIDTH-180, 35))
     else:
         running = False
         for entity in all_Sprites:
@@ -679,6 +728,7 @@ while running:
 
 
 if GameOver:
+    saveGameStats(user_name, highScore)
     for entity in all_Enemies:
         entity.kill()
     pygame.display.flip()
