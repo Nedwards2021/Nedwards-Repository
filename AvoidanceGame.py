@@ -35,8 +35,7 @@ from pygame.locals import (
     K_w,
     K_a,
     K_s,
-    K_d,
-    K_RETURN
+    K_d
     )
 
 SCREEN_WIDTH = 500
@@ -532,8 +531,6 @@ while running:
                 player.moving = False
                 player.isIdle = True
         elif event.type == QUIT:
-            saveGameStats(user_name, highScore, enemyKilled, potionCollected, redPotionCollected, bluePotionCollected, yellowPotionCollected,
-                          greenPotionCollected, purplePotionCollected)
             running = False
             GameOver = False
         elif event.type == ADDENEMY:
