@@ -12,10 +12,14 @@ import sqlite3
 from sqlite3 import Error
 import GameLogon as GL
 
-timesPlayed = 0
-enemyKilled = 0
-fruitEaten = 0
 highScore = 0
+enemyKilled = 0
+potionCollected = 0
+redPotionCollected = 0
+bluePotionCollected = 0
+yellowPotionCollected = 0
+greenPotionCollected = 0
+purplePotionCollected = 0
 
 from pygame.locals import (
     RLEACCEL,
@@ -383,11 +387,15 @@ def getDbConnection():
         print(e)
     return conn
 
-def saveGameStats(userName, highScore):
+
+def saveGameStats(userName, highScore, enemyKilled, potionCollected, redPotionCollected, bluePotionCollected, yellowPotionCollected,
+                          greenPotionCollected, purplePotionCollected):
     conn = getDbConnection()
     curr = conn.cursor()
-    updateSql = "UPDATE Stats set HighScore = ? WHERE UserID = ?"
-    record = (userName, highScore)
+    updateSql = "UPDATE Stats set HighScore = ?,EnemyKilled = ?,PotionsCollected = ?,RedPotionsCollected = ?,BluePotionsCollected = ?," \
+                "YellowPotionsCollected = ?,GreenPotionsCollected = ?,PurplePotionsCollected = ? WHERE UserID = ?"
+    record = (highScore, enemyKilled, potionCollected, redPotionCollected, bluePotionCollected, yellowPotionCollected,
+                          greenPotionCollected, purplePotionCollected, userName)
     print(f"this is the sql update: {updateSql}")
     curr.execute(updateSql, record)
     print(record)
@@ -402,13 +410,22 @@ curr = con.cursor()
 #rows = curr.execute("SELECT * FROM Stats").fetchall()
 rows = curr.execute("SELECT * FROM Stats WHERE UserID = ?", (user_name,)).fetchall()
 if len(rows) == 0:
-    record = (user_name, 0, 0, 0, 0)
-    sql = "INSERT INTO Stats (UserId,HighScore,TimesPlayed,EnemyKilled,FruitEaten) values(?,?,?,?,?)"
+    record = (user_name, 0, 0, 0, 0, 0, 0, 0, 0)
+    sql = "INSERT INTO Stats (UserId,HighScore,EnemyKilled,PotionsCollected,RedPotionsCollected,BluePotionsCollected,YellowPotionsCollected," \
+          "GreenPotionsCollected,PurplePotionsCollected) values(?,?,?,?,?,?,?,?,?)"
     curr.execute(sql, record)
     con.commit()
 else:
     for row in rows:
         highScore = row[1]
+        enemyKilled = row[2]
+        potionCollected = row[3]
+        redPotionCollected = row[4]
+        bluePotionCollected = row[5]
+        yellowPotionCollected = row[6]
+        greenPotionCollected = row[7]
+        purplePotionCollected = row[8]
+
 
 
 
@@ -515,7 +532,8 @@ while running:
                 player.moving = False
                 player.isIdle = True
         elif event.type == QUIT:
-            saveGameStats(user_name, highScore)
+            saveGameStats(user_name, highScore, enemyKilled, potionCollected, redPotionCollected, bluePotionCollected, yellowPotionCollected,
+                          greenPotionCollected, purplePotionCollected)
             running = False
             GameOver = False
         elif event.type == ADDENEMY:
@@ -585,6 +603,8 @@ while running:
             else:
                 PlayervsSpectre.kill()
                 player.IsMovable = True
+                enemyKilled += 1
+                print(enemyKilled)
 
     PlayerPotion = pygame.sprite.spritecollideany(player, all_potions)
     if PlayerPotion != None:
@@ -594,26 +614,36 @@ while running:
             player.IsYellow = False
             player.IsGreen = False
             player.IsPurple = False
+            potionCollected += 1
+            bluePotionCollected +=1
         if PlayerPotion.etype == "Red":
             Lives += 1
+            potionCollected +=1
+            redPotionCollected +=1
         if PlayerPotion.etype == "Yellow":
             player.IsColored = True
             player.IsBlue = False
             player.IsYellow = True
             player.IsGreen = False
             player.IsPurple = False
+            potionCollected +=1
+            yellowPotionCollected += 1
         if PlayerPotion.etype == "Purple":
             player.IsColored = True
             player.IsBlue = False
             player.IsYellow = False
             player.IsGreen = False
             player.IsPurple = True
+            potionCollected += 1
+            purplePotionCollected += 1
         if PlayerPotion.etype == "Green":
             player.IsColored = True
             player.IsBlue = False
             player.IsYellow = False
             player.IsGreen = True
             player.IsPurple = False
+            potionCollected += 1
+            greenPotionCollected += 1
         PlayerPotion.kill()
 
         if player.IsBlue:
@@ -728,7 +758,8 @@ while running:
 
 
 if GameOver:
-    saveGameStats(user_name, highScore)
+    saveGameStats(user_name, highScore, enemyKilled, potionCollected, redPotionCollected, bluePotionCollected, yellowPotionCollected,
+                  greenPotionCollected, purplePotionCollected)
     for entity in all_Enemies:
         entity.kill()
     pygame.display.flip()
