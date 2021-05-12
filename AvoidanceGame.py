@@ -408,22 +408,27 @@ curr = con.cursor()
 
 #rows = curr.execute("SELECT * FROM Stats").fetchall()
 rows = curr.execute("SELECT * FROM Stats WHERE UserID = ?", (user_name,)).fetchall()
-if len(rows) == 0:
-    record = (user_name, 0, 0, 0, 0, 0, 0, 0, 0)
-    sql = "INSERT INTO Stats (UserId,HighScore,EnemyKilled,PotionsCollected,RedPotionsCollected,BluePotionsCollected,YellowPotionsCollected," \
-          "GreenPotionsCollected,PurplePotionsCollected) values(?,?,?,?,?,?,?,?,?)"
-    curr.execute(sql, record)
-    con.commit()
+if user_name == '':
+    running = False
+    GameOver = False
 else:
-    for row in rows:
-        highScore = row[1]
-        enemyKilled = row[2]
-        potionCollected = row[3]
-        redPotionCollected = row[4]
-        bluePotionCollected = row[5]
-        yellowPotionCollected = row[6]
-        greenPotionCollected = row[7]
-        purplePotionCollected = row[8]
+    running = True
+    if len(rows) == 0:
+        record = (user_name, 0, 0, 0, 0, 0, 0, 0, 0)
+        sql = "INSERT INTO Stats (UserId,HighScore,EnemyKilled,PotionsCollected,RedPotionsCollected,BluePotionsCollected,YellowPotionsCollected," \
+            "GreenPotionsCollected,PurplePotionsCollected) values(?,?,?,?,?,?,?,?,?)"
+        curr.execute(sql, record)
+        con.commit()
+    else:
+        for row in rows:
+            highScore = row[1]
+            enemyKilled = row[2]
+            potionCollected = row[3]
+            redPotionCollected = row[4]
+            bluePotionCollected = row[5]
+            yellowPotionCollected = row[6]
+            greenPotionCollected = row[7]
+            purplePotionCollected = row[8]
 
 
 
@@ -476,8 +481,6 @@ all_Enemies.add(enemy)
 all_Sprites.add(enemy)
 all_potions.add(potion)
 all_Sprites.add(potion)
-
-running = True
 
 
 
@@ -601,7 +604,6 @@ while running:
                 PlayervsSpectre.kill()
                 player.IsMovable = True
                 enemyKilled += 1
-                print(enemyKilled)
 
     PlayerPotion = pygame.sprite.spritecollideany(player, all_potions)
     if PlayerPotion != None:
