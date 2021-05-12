@@ -67,7 +67,7 @@ class Player(pygame.sprite.Sprite):
     IsGreen = False
     IsColored = False
     IsAttacking = False
-    IsCollideable = True
+    IsCollidable = True
     BlueCount = 0
     YellowCount = 0
     GreenCount = 0
@@ -78,6 +78,7 @@ class Player(pygame.sprite.Sprite):
     PlayerSpeedAdded = 0
     EnemySpeedRemoved = 0
     EnemySpawnAdded = 0
+    AttackNum = 0
     def __init__(self):
         super(Player, self).__init__()
         self.surf = pygame.image.load("Images/Swordsman/Swordsman-Idle-North_00.png").convert()
@@ -166,12 +167,15 @@ class Player(pygame.sprite.Sprite):
                     player.surf = pygame.image.load("Images/Swordsman/Swordsman_Flash.png").convert_alpha()
             self.IdleCount += 1
         elif self.IsAttacking:
-            if self.AttackCount > len(PlayerAttackAnimation) -1:
+            if self.AttackCount > len(PlayerAttackAnimation)-1:
                 self.AttackCount = 0
-                self.isIdle = True
-                self.IsAttacking = False
-                self.isInvulnerable = False
-                self.IsMovable = True
+                if self.AttackNum != 0:
+                    self.isIdle = True
+                    self.IsAttacking = False
+                    self.isInvulnerable = False
+                    self.IsMovable = True
+                else:
+                    self.AttackNum += 1
             else:
                 if self.AttackCount % 3 == 0:
                     self.surf = pygame.image.load(PlayerAttackAnimation[self.AttackCount]).convert_alpha()
@@ -215,7 +219,7 @@ class Player(pygame.sprite.Sprite):
         self.isFlashing = True
         self.isInvulnerable = True
         self.IsMovable = True
-        self.IsCollideable = True
+        self.IsCollidable = True
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -289,9 +293,6 @@ class Enemy(pygame.sprite.Sprite):
         else:
             if self.IsAttacking != True:
                 self.rect.move_ip(0, self.speed)
-
-    def Dying(self, value):
-        self.Dying = value
 
 
 
@@ -591,7 +592,7 @@ while running:
             player.PurpleCount += 1
 
     PlayervsSpectre = pygame.sprite.spritecollideany(player, all_Enemies)
-    if player.IsCollideable == True:
+    if player.IsCollidable == True:
         if PlayervsSpectre != None:
             if player.isInvulnerable == False:
                 player.IsMovable = False
@@ -599,7 +600,7 @@ while running:
                 PlayervsSpectre.IsAttacking = True
                 player.isFlashing = True
                 Lives -= 1
-                player.IsCollideable = False
+                player.IsCollidable = False
             else:
                 PlayervsSpectre.kill()
                 player.IsMovable = True
