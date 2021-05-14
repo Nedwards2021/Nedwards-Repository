@@ -179,8 +179,8 @@ class Player(pygame.sprite.Sprite):
                     self.AttackNum += 1
             else:
                 if self.AttackCount % 2 == 0:
-                    self.isInvulnerable = True
                     self.surf = pygame.image.load(PlayerAttackAnimation[self.AttackCount]).convert_alpha()
+                self.isInvulnerable = True
                 self.AttackCount += 1
 
 
